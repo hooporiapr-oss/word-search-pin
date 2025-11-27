@@ -1,1046 +1,622 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Akashic Word Search</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Georgia', serif;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1034 50%, #2d1b4e 100%);
-            min-height: 100vh;
-            color: #e8e8f0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .title {
-            font-size: 2.5em;
-            font-weight: bold;
-            background: linear-gradient(135deg, #ffd700, #ff8c00, #8a2be2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 10px;
-            letter-spacing: 4px;
-            text-align: center;
-        }
-
-        .subtitle {
-            color: #d4af37;
-            font-size: 1.2em;
-            font-style: italic;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .container {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 3px solid rgba(212, 175, 55, 0.5);
-            border-radius: 20px;
-            padding: 30px;
-            width: 100%;
-            max-width: 700px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
-        }
-
-        .hidden { display: none !important; }
-
-        .back-home {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(212, 175, 55, 0.3);
-            border-radius: 20px;
-            color: #ffd700;
-            text-decoration: none;
-            font-size: 0.9em;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .back-home:hover {
-            background: rgba(255, 215, 0, 0.2);
-            border-color: #ffd700;
-        }
-
-        /* ==================== PIN ENTRY STYLES ==================== */
-        .pin-title {
-            color: #ffd700;
-            font-size: 1.5em;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        .pin-subtitle {
-            color: #b8b8cc;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 0.95em;
-        }
-
-        .pin-dots {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .pin-dot {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid rgba(212, 175, 55, 0.5);
-            background: transparent;
-            transition: all 0.2s ease;
-        }
-
-        .pin-dot.filled {
-            background: #ffd700;
-            border-color: #ffd700;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-        }
-
-        .pin-keypad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            max-width: 280px;
-            margin: 0 auto 20px;
-        }
-
-        .pin-key {
-            aspect-ratio: 1/1;
-            font-size: 1.8em;
-            font-family: 'Georgia', serif;
-            border: 2px solid rgba(212, 175, 55, 0.3);
-            background: rgba(255, 255, 255, 0.05);
-            color: #e8e8f0;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .pin-key:hover {
-            background: rgba(255, 215, 0, 0.1);
-            border-color: rgba(255, 215, 0, 0.5);
-        }
-
-        .pin-key:active {
-            transform: scale(0.95);
-            background: rgba(255, 215, 0, 0.2);
-        }
-
-        .pin-key.delete { font-size: 1.2em; }
-        .pin-key.empty { visibility: hidden; }
-
-        .pin-message {
-            text-align: center;
-            min-height: 24px;
-            margin-top: 15px;
-            font-size: 0.95em;
-        }
-
-        .pin-message.error { color: #ff6b6b; }
-        .pin-message.success { color: #4ecdc4; }
-
-        .pin-toggle {
-            text-align: center;
-            margin-top: 25px;
-            color: #b8b8cc;
-        }
-
-        .pin-toggle-link {
-            color: #ffd700;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
-        /* ==================== GAME STYLES ==================== */
-        .button {
-            width: 100%;
-            background: linear-gradient(135deg, #ffd700, #ff8c00);
-            color: #1a1034;
-            border: none;
-            padding: 15px;
-            border-radius: 30px;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            font-family: 'Georgia', serif;
-            margin-top: 10px;
-            transition: all 0.3s ease;
-        }
-        .button:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255, 215, 0, 0.6); }
-        .button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .button.secondary { background: linear-gradient(135deg, #8a2be2, #4b0082); color: #fff; }
-
-        .welcome-box {
-            background: rgba(255, 215, 0, 0.1);
-            border: 2px solid rgba(255, 215, 0, 0.3);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .welcome-box h3 { color: #ffd700; margin-bottom: 5px; }
-
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; }
-        .stat-box {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border: 1px solid rgba(212, 175, 55, 0.2);
-        }
-        .stat-value { font-size: 1.8em; color: #ffd700; font-weight: bold; }
-        .stat-label { color: #b8b8cc; font-size: 0.85em; margin-top: 5px; }
-
-        /* Category Selection */
-        .category-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin: 20px 0;
-        }
-
-        .category-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(212, 175, 55, 0.3);
-            border-radius: 12px;
-            padding: 15px 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-
-        .category-btn:hover, .category-btn.selected {
-            border-color: #ffd700;
-            background: rgba(255, 215, 0, 0.1);
-        }
-
-        .category-btn.selected {
-            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.3);
-        }
-
-        .category-icon { font-size: 2em; margin-bottom: 8px; }
-        .category-name { color: #ffd700; font-size: 1em; font-weight: bold; }
-
-        /* Game Screen */
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .game-info {
-            display: flex;
-            gap: 15px;
-        }
-
-        .info-box {
-            background: rgba(138, 43, 226, 0.2);
-            border: 2px solid rgba(138, 43, 226, 0.4);
-            border-radius: 10px;
-            padding: 8px 15px;
-            text-align: center;
-        }
-
-        .info-value { font-size: 1.3em; color: #ffd700; font-weight: bold; }
-        .info-label { font-size: 0.75em; color: #b8b8cc; }
-
-        .timer.warning { color: #ff6b6b; animation: pulse 0.5s infinite; }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* ==================== WORD GRID ==================== */
-        .word-grid-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 15px;
-            overflow-x: auto;
-        }
-
-        .word-grid {
-            display: grid;
-            gap: 3px;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 8px;
-            border-radius: 12px;
-            border: 2px solid rgba(212, 175, 55, 0.3);
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none;
-        }
-
-        .grid-cell {
-            width: 28px;
-            height: 28px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-weight: bold;
-            color: #e8e8f0;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            text-transform: uppercase;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .grid-cell.selected {
-            background: rgba(255, 215, 0, 0.6);
-            color: #1a1034;
-            transform: scale(1.05);
-        }
-
-        .grid-cell.found {
-            background: linear-gradient(135deg, #51cf66, #2ecc71);
-            color: #fff;
-        }
-
-        /* Word List */
-        .word-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            margin-top: 15px;
-        }
-
-        .word-item {
-            background: rgba(138, 43, 226, 0.2);
-            border: 2px solid rgba(138, 43, 226, 0.4);
-            border-radius: 15px;
-            padding: 6px 12px;
-            font-size: 0.9em;
-            color: #e8e8f0;
-            transition: all 0.3s ease;
-        }
-
-        .word-item.found {
-            background: linear-gradient(135deg, #51cf66, #2ecc71);
-            border-color: #2ecc71;
-            color: #fff;
-            text-decoration: line-through;
-        }
-
-        /* Results */
-        .results-box {
-            background: rgba(255, 215, 0, 0.1);
-            border: 2px solid rgba(255, 215, 0, 0.3);
-            border-radius: 15px;
-            padding: 25px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .results-title { font-size: 1.8em; color: #ffd700; margin-bottom: 20px; }
-
-        .results-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        @media (max-width: 600px) {
-            .title { font-size: 1.8em; }
-            .container { padding: 20px 15px; }
-            .grid-cell { width: 24px; height: 24px; font-size: 0.8em; }
-            .word-grid { padding: 6px; gap: 2px; }
-            .category-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-            .category-btn { padding: 12px 8px; }
-            .category-icon { font-size: 1.5em; }
-            .category-name { font-size: 0.9em; }
-            .game-header { flex-direction: column; align-items: stretch; }
-            .game-info { justify-content: center; }
-            .results-stats { grid-template-columns: 1fr; }
-            .back-home { position: relative; top: auto; left: auto; margin-bottom: 15px; display: inline-block; }
-            .pin-keypad { max-width: 240px; }
-            .pin-key { font-size: 1.5em; }
-        }
-
-        @media (max-width: 380px) {
-            .grid-cell { width: 22px; height: 22px; font-size: 0.75em; border-radius: 3px; }
-            .word-grid { padding: 5px; gap: 2px; }
-            .word-item { padding: 5px 10px; font-size: 0.8em; }
-            .info-box { padding: 6px 12px; }
-            .info-value { font-size: 1.1em; }
-            .pin-keypad { max-width: 200px; gap: 8px; }
-            .pin-key { font-size: 1.3em; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Akashic Word Search</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Georgia,serif;background:linear-gradient(135deg,#0a0e27,#1a1034,#2d1b4e);min-height:100vh;color:#e8e8f0;display:flex;flex-direction:column;align-items:center;padding:15px;-webkit-tap-highlight-color:transparent}
+.title{font-size:2em;background:linear-gradient(135deg,#ffd700,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:5px;text-align:center}
+.subtitle{color:#d4af37;margin-bottom:20px;font-size:0.95em}
+.box{background:rgba(255,255,255,0.05);border:2px solid rgba(212,175,55,0.5);border-radius:18px;padding:20px;width:100%;max-width:500px}
+.hidden{display:none!important}
+.banner{position:fixed;top:15px;right:15px;background:rgba(255,215,0,0.2);border:2px solid rgba(255,215,0,0.5);color:#ffd700;padding:8px 14px;border-radius:12px;font-size:0.85em;z-index:100}
+.back{position:fixed;top:15px;left:15px;padding:8px 14px;background:rgba(255,255,255,0.1);border:2px solid rgba(212,175,55,0.3);border-radius:15px;color:#ffd700;text-decoration:none;font-size:0.85em;z-index:100}
+.popup-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;z-index:5000;padding:20px}
+.popup{background:linear-gradient(135deg,#1a1034,#2d1b4e);border:2px solid rgba(255,215,0,0.3);border-radius:18px;padding:25px;max-width:300px;text-align:center}
+.popup-emoji{font-size:2.5em;margin-bottom:10px}
+.popup h3{color:#e8e8f0;margin-bottom:5px}
+.popup p{color:#a0a0b8;font-size:0.9em;margin-bottom:20px}
+.popup a{display:block;padding:12px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);border-radius:10px;color:#e8e8f0;text-decoration:none;margin-bottom:15px}
+.popup button{width:100%;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#1a1034;border:none;padding:12px;border-radius:20px;font-weight:bold;cursor:pointer;font-family:Georgia,serif}
+.pin-title{color:#ffd700;font-size:1.3em;text-align:center;margin-bottom:8px}
+.pin-sub{color:#b8b8cc;text-align:center;margin-bottom:20px;font-size:0.9em}
+.dots{display:flex;justify-content:center;gap:12px;margin-bottom:20px}
+.dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(212,175,55,0.5)}
+.dot.on{background:#ffd700;border-color:#ffd700}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:0 auto 15px}
+.key{aspect-ratio:1;font-size:1.4em;border:2px solid rgba(212,175,55,0.3);background:rgba(255,255,255,0.05);color:#e8e8f0;border-radius:10px;cursor:pointer;font-family:Georgia,serif}
+.key:active{transform:scale(0.95)}
+.key.empty{visibility:hidden}
+.msg{text-align:center;min-height:20px;font-size:0.9em}
+.msg.err{color:#ff6b6b}
+.msg.ok{color:#4ecdc4}
+.toggle{text-align:center;margin-top:18px;color:#b8b8cc;font-size:0.9em}
+.toggle span{color:#ffd700;cursor:pointer;text-decoration:underline}
+.btn{width:100%;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#1a1034;border:none;padding:14px;border-radius:22px;font-size:1em;font-weight:bold;cursor:pointer;margin-top:8px;font-family:Georgia,serif}
+.btn:hover{box-shadow:0 5px 20px rgba(255,215,0,0.5)}
+.btn2{background:linear-gradient(135deg,#8a2be2,#4b0082);color:#fff}
+.btn3{background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff}
+.welcome{background:rgba(255,215,0,0.1);border:2px solid rgba(255,215,0,0.3);border-radius:12px;padding:15px;margin-bottom:15px;text-align:center}
+.welcome h3{color:#ffd700;margin-bottom:5px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:15px 0}
+.stat{background:rgba(255,255,255,0.05);padding:12px;border-radius:10px;text-align:center;border:1px solid rgba(212,175,55,0.2)}
+.stat b{display:block;font-size:1.5em;color:#ffd700}
+.stat span{color:#b8b8cc;font-size:0.75em}
+.hdr{display:flex;justify-content:space-between;padding:10px 12px;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:10px}
+.hdr div{text-align:center}
+.hdr b{color:#ffd700;font-size:1.1em}
+.hdr span{color:#b8b8cc;font-size:0.6em;display:block}
+.selection-box{background:rgba(255,215,0,0.15);border:2px solid rgba(255,215,0,0.4);border-radius:10px;padding:12px;margin-bottom:10px;text-align:center;min-height:50px}
+.selection-label{color:#b8b8cc;font-size:0.75em;margin-bottom:5px}
+.selection-text{color:#ffd700;font-size:1.5em;font-weight:bold;letter-spacing:4px;min-height:30px;word-break:break-all}
+.grid-container{background:rgba(0,0,0,0.3);border-radius:12px;padding:10px;margin-bottom:10px;border:2px solid rgba(212,175,55,0.3)}
+.grid{display:grid;gap:4px;user-select:none;touch-action:manipulation}
+.cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:1.1em;font-weight:bold;background:rgba(255,255,255,0.12);border-radius:6px;cursor:pointer;text-transform:uppercase;color:#e8e8f0;border:2px solid transparent;transition:background 0.1s,transform 0.1s}
+.cell.selected{background:rgba(255,215,0,0.6);color:#000;border-color:#ffd700;transform:scale(1.05);box-shadow:0 0 10px rgba(255,215,0,0.5)}
+.cell.found{background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;border-color:#27ae60}
+.cell.found.selected{background:linear-gradient(135deg,#2ecc71,#27ae60)}
+.cell.wrong{background:rgba(231,76,60,0.6);animation:shake 0.3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.action-row{display:flex;gap:10px;margin-bottom:10px}
+.action-row .btn{flex:1;margin:0;padding:12px}
+.words-box{margin:10px 0}
+.words-label{color:#b8b8cc;font-size:0.8em;text-align:center;margin-bottom:8px}
+.words-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.word-tag{padding:6px 12px;background:rgba(255,255,255,0.1);border-radius:20px;font-size:0.85em;border:2px solid rgba(212,175,55,0.3);color:#e8e8f0}
+.word-tag.found{background:rgba(46,204,113,0.3);border-color:#2ecc71;text-decoration:line-through;color:#2ecc71}
+.info{background:rgba(138,43,226,0.15);border:2px solid rgba(138,43,226,0.3);border-radius:10px;padding:10px;margin-top:10px}
+.info h4{color:#8a2be2;margin-bottom:5px;text-align:center;font-size:0.85em}
+.info p{color:#c4c4d4;font-size:0.78em;line-height:1.4;text-align:center}
+.res-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;justify-content:center;align-items:center;z-index:3000;padding:20px}
+.res{background:linear-gradient(135deg,#1a1034,#2d1b4e);border:3px solid #ffd700;border-radius:20px;padding:25px 20px;max-width:350px;width:100%;text-align:center;animation:zoomIn 0.3s}
+@keyframes zoomIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
+.res-icon{font-size:3em;margin-bottom:10px}
+.res h2{color:#ffd700;margin-bottom:10px}
+.res-score{font-size:2.5em;color:#ffd700;font-weight:bold}
+.res-label{color:#b8b8cc;margin-bottom:15px}
+.res-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:15px}
+.res-stat{background:rgba(255,255,255,0.05);padding:10px;border-radius:8px}
+.res-stat b{color:#ffd700;font-size:1.3em;display:block}
+.res-stat span{color:#b8b8cc;font-size:0.7em}
+.record{background:rgba(255,215,0,0.2);border:2px solid #ffd700;border-radius:8px;padding:10px;margin:12px 0;color:#ffd700;font-weight:bold}
+.rating{color:#d4af37;margin-bottom:15px}
+@media(max-width:400px){.cell{font-size:0.95em}.selection-text{font-size:1.3em}}
+@media(max-width:500px){.back,.banner{position:relative;top:auto;left:auto;right:auto;margin:0 5px 10px;display:inline-block}}
+</style>
 </head>
 <body>
-    <a href="https://hooporiapr-oss.github.io/akashic-works/" class="back-home">← Back to Home</a>
-    
-    <div class="title">🔍 Akashic Word Search</div>
-    <div class="subtitle">Find Hidden Words</div>
+<a href="https://hooporiapr-oss.github.io/akashic-works/" class="back">← Home</a>
+<div class="title">🔍 Word Search</div>
+<div class="subtitle">Brain Training Edition</div>
 
-    <!-- PIN LOGIN SCREEN -->
-    <div class="container" id="pinLoginScreen">
-        <div class="pin-title">Enter PIN</div>
-        <div class="pin-subtitle">Enter your 4-digit PIN to play</div>
-        
-        <div class="pin-dots">
-            <div class="pin-dot" id="dot1"></div>
-            <div class="pin-dot" id="dot2"></div>
-            <div class="pin-dot" id="dot3"></div>
-            <div class="pin-dot" id="dot4"></div>
-        </div>
-        
-        <div class="pin-keypad">
-            <button class="pin-key" data-num="1">1</button>
-            <button class="pin-key" data-num="2">2</button>
-            <button class="pin-key" data-num="3">3</button>
-            <button class="pin-key" data-num="4">4</button>
-            <button class="pin-key" data-num="5">5</button>
-            <button class="pin-key" data-num="6">6</button>
-            <button class="pin-key" data-num="7">7</button>
-            <button class="pin-key" data-num="8">8</button>
-            <button class="pin-key" data-num="9">9</button>
-            <button class="pin-key empty"></button>
-            <button class="pin-key" data-num="0">0</button>
-            <button class="pin-key delete">⌫</button>
-        </div>
-        
-        <div class="pin-message" id="pinMessage"></div>
-        
-        <div class="pin-toggle">
-            No account? <span class="pin-toggle-link" id="showCreatePin">Create PIN</span>
-        </div>
-    </div>
+<div class="box" id="loginBox">
+<div class="pin-title">Enter PIN</div>
+<div class="pin-sub">Enter your 4-digit PIN</div>
+<div class="dots"><div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div><div class="dot" id="d4"></div></div>
+<div class="keypad" id="loginPad"></div>
+<div class="msg" id="loginMsg"></div>
+<div class="toggle">No account? <span id="toCreate">Create PIN</span></div>
+</div>
 
-    <!-- PIN CREATE SCREEN -->
-    <div class="container hidden" id="pinCreateScreen">
-        <div class="pin-title" id="createPinTitle">Create PIN</div>
-        <div class="pin-subtitle" id="createPinSubtitle">Choose a 4-digit PIN</div>
-        
-        <div class="pin-dots">
-            <div class="pin-dot" id="createDot1"></div>
-            <div class="pin-dot" id="createDot2"></div>
-            <div class="pin-dot" id="createDot3"></div>
-            <div class="pin-dot" id="createDot4"></div>
-        </div>
-        
-        <div class="pin-keypad" id="createKeypad">
-            <button class="pin-key" data-num="1">1</button>
-            <button class="pin-key" data-num="2">2</button>
-            <button class="pin-key" data-num="3">3</button>
-            <button class="pin-key" data-num="4">4</button>
-            <button class="pin-key" data-num="5">5</button>
-            <button class="pin-key" data-num="6">6</button>
-            <button class="pin-key" data-num="7">7</button>
-            <button class="pin-key" data-num="8">8</button>
-            <button class="pin-key" data-num="9">9</button>
-            <button class="pin-key empty"></button>
-            <button class="pin-key" data-num="0">0</button>
-            <button class="pin-key delete">⌫</button>
-        </div>
-        
-        <div class="pin-message" id="createPinMessage"></div>
-        
-        <div class="pin-toggle">
-            Already have a PIN? <span class="pin-toggle-link" id="showLoginPin">Login</span>
-        </div>
-    </div>
+<div class="box hidden" id="createBox">
+<div class="pin-title" id="createTitle">Create PIN</div>
+<div class="pin-sub" id="createSub">Choose a 4-digit PIN</div>
+<div class="dots"><div class="dot" id="c1"></div><div class="dot" id="c2"></div><div class="dot" id="c3"></div><div class="dot" id="c4"></div></div>
+<div class="keypad" id="createPad"></div>
+<div class="msg" id="createMsg"></div>
+<div class="toggle">Have a PIN? <span id="toLogin">Login</span></div>
+</div>
 
-    <!-- DASHBOARD SCREEN -->
-    <div class="container hidden" id="dashboardScreen">
-        <div class="welcome-box">
-            <h3>Welcome Back! 🔍</h3>
-            <p style="color: #b8b8cc; margin-top: 5px;">Ready to find some words?</p>
-        </div>
-        <div class="stats-grid">
-            <div class="stat-box"><div class="stat-value" id="dashGames">0</div><div class="stat-label">Games Played</div></div>
-            <div class="stat-box"><div class="stat-value" id="dashWords">0</div><div class="stat-label">Words Found</div></div>
-            <div class="stat-box"><div class="stat-value" id="dashBestTime">--</div><div class="stat-label">Best Time</div></div>
-            <div class="stat-box"><div class="stat-value" id="dashRating">--</div><div class="stat-label">Rating</div></div>
-        </div>
-        <h4 style="color: #ffd700; margin-bottom: 10px; text-align: center;">Choose Category</h4>
-        <div class="category-grid">
-            <div class="category-btn selected" data-category="animals"><div class="category-icon">🐾</div><div class="category-name">Animals</div></div>
-            <div class="category-btn" data-category="science"><div class="category-icon">🔬</div><div class="category-name">Science</div></div>
-            <div class="category-btn" data-category="nature"><div class="category-icon">🌿</div><div class="category-name">Nature</div></div>
-            <div class="category-btn" data-category="food"><div class="category-icon">🍕</div><div class="category-name">Food</div></div>
-        </div>
-        <button class="button" id="startGameBtn">🔍 Start Word Search</button>
-        <button class="button secondary" id="dashLogoutBtn">Logout</button>
-    </div>
+<div class="box hidden" id="dashBox">
+<div class="welcome"><h3>Welcome Back! 🧠</h3><p style="color:#b8b8cc">Find hidden brain words</p></div>
+<div class="stats">
+<div class="stat"><b id="dGames">0</b><span>Games</span></div>
+<div class="stat"><b id="dBest">--</b><span>Best Time</span></div>
+<div class="stat"><b id="dWords">--</b><span>Words Found</span></div>
+<div class="stat"><b id="dRate">--</b><span>Rating</span></div>
+</div>
+<button class="btn" id="startBtn">🔍 Start Game</button>
+<button class="btn btn2" id="logoutBtn">Logout</button>
+</div>
 
-    <!-- GAME SCREEN -->
-    <div class="container hidden" id="gameScreen">
-        <div class="game-header">
-            <div class="game-info">
-                <div class="info-box"><div class="info-value" id="wordsFound">0/8</div><div class="info-label">Found</div></div>
-                <div class="info-box"><div class="info-value timer" id="gameTimer">2:00</div><div class="info-label">Time</div></div>
-            </div>
-            <button class="button secondary" id="backToMenuBtn" style="width: auto; padding: 8px 20px; font-size: 0.9em;">Menu</button>
-        </div>
-        <div class="word-grid-container"><div class="word-grid" id="wordGrid"></div></div>
-        <div class="word-list" id="wordList"></div>
-    </div>
+<div class="box hidden" id="gameBox">
+<div class="hdr">
+<div><b id="gFound">0/8</b><span>FOUND</span></div>
+<div><b id="gTime">0:00</b><span>TIME</span></div>
+</div>
+<div class="selection-box">
+<div class="selection-label">Your selection (tap letters):</div>
+<div class="selection-text" id="selectionText">-</div>
+</div>
+<div class="grid-container">
+<div class="grid" id="grid"></div>
+</div>
+<div class="action-row">
+<button class="btn" id="submitBtn">✓ Submit</button>
+<button class="btn btn3" id="clearBtn">✗ Clear</button>
+</div>
+<div class="words-box">
+<div class="words-label">Words to find:</div>
+<div class="words-list" id="wordList"></div>
+</div>
+<button class="btn btn2" id="quitBtn">← Quit</button>
+<div class="info">
+<h4>🧠 How to Play</h4>
+<p>Tap each letter one by one to build a word. Press "Submit" to confirm or "Clear" to start over.</p>
+</div>
+</div>
 
-    <!-- RESULTS SCREEN -->
-    <div class="container hidden" id="resultsScreen">
-        <div class="results-box">
-            <div class="results-title" id="resultsTitle">🎉 Great Job!</div>
-            <div class="results-stats">
-                <div class="stat-box"><div class="stat-value" id="resultWords">0/8</div><div class="stat-label">Words Found</div></div>
-                <div class="stat-box"><div class="stat-value" id="resultTime">0:00</div><div class="stat-label">Time</div></div>
-                <div class="stat-box"><div class="stat-value" id="resultScore">0</div><div class="stat-label">Score</div></div>
-            </div>
-        </div>
-        <button class="button" id="playAgainBtn">🔍 Play Again</button>
-        <button class="button secondary" id="resultsMenuBtn">Back to Menu</button>
-    </div>
+<div class="res-bg hidden" id="resBg">
+<div class="res">
+<div class="res-icon" id="resIcon">🔍</div>
+<h2>Puzzle Complete!</h2>
+<div class="res-score" id="resTime">0:00</div>
+<div class="res-label">Total Time</div>
+<div class="res-stats">
+<div class="res-stat"><b id="resWords">8</b><span>Words</span></div>
+<div class="res-stat"><b id="resAvg">0s</b><span>Avg/Word</span></div>
+</div>
+<div class="record hidden" id="resRecord">🏆 New Record!</div>
+<div class="rating" id="resRating">Rating: --</div>
+<button class="btn" id="againBtn">🔄 Play Again</button>
+<button class="btn btn2" id="menuBtn">Menu</button>
+</div>
+</div>
 
-    <script>
-        // ==================== WORD LISTS ====================
-        const wordLists = {
-            animals: ['LION', 'TIGER', 'BEAR', 'WOLF', 'EAGLE', 'SHARK', 'SNAKE', 'HORSE', 'ZEBRA', 'PANDA', 'KOALA', 'WHALE'],
-            science: ['ATOM', 'CELL', 'GENE', 'LASER', 'ORBIT', 'PLASMA', 'QUARK', 'PROTON', 'ENERGY', 'FORCE', 'LIGHT', 'WAVE'],
-            nature: ['TREE', 'RIVER', 'OCEAN', 'CLOUD', 'STORM', 'FOREST', 'DESERT', 'ISLAND', 'VALLEY', 'LAKE', 'RAIN', 'WIND'],
-            food: ['PIZZA', 'BURGER', 'PASTA', 'SALAD', 'BREAD', 'CHEESE', 'APPLE', 'BANANA', 'ORANGE', 'GRAPE', 'RICE', 'SOUP']
-        };
+<div class="popup-bg hidden" id="limitPopup">
+<div class="popup">
+<div class="popup-emoji">⏸️</div>
+<h3>Daily limit reached</h3>
+<p>You've used 3 free plays today</p>
+<a href="https://hooporiapr-oss.github.io/akashic-works/">Return Home</a>
+<button id="upgradeBtn">Unlock Unlimited</button>
+</div>
+</div>
 
-        // ==================== PIN AUTH SYSTEM ====================
-        const PIN_STORAGE_KEY = 'akashic_pin_hash';
-        const PLAYER_ID_KEY = 'akashic_player_id';
-        const STATS_KEY = 'akashic_wordsearch_stats';
+<script>
+(function(){
+var PK="wsen2_pin",SK="wsen2_stats",TK="wsen2_tries",MAX=3;
+var WORDS=[
+"BRAIN","MEMORY","FOCUS","THINK","MIND","LOGIC","PUZZLE","SMART",
+"NEURON","CORTEX","REFLEX","SPEED","SKILL","TRAIN","LEARN","RECALL",
+"REASON","SOLVE","QUICK","SHARP","ALERT","CLEVER","MENTAL","WISE"
+];
+var SIZE=10;
+var DIRS=[[0,1],[1,0],[1,1],[0,-1],[-1,0],[-1,-1],[1,-1],[-1,1]];
 
-        function hashPIN(pin) {
-            let hash = 0;
-            const salted = pin + 'akashic_salt_2024';
-            for (let i = 0; i < salted.length; i++) {
-                hash = ((hash << 5) - hash) + salted.charCodeAt(i);
-                hash = hash & hash;
-            }
-            return hash.toString(36);
-        }
+var grid=[];
+var gameWords=[];
+var foundWords=[];
+var selectedCells=[];
+var startTime=0;
+var timerInterval=null;
 
-        function generatePlayerId() {
-            return 'player_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-        }
+function hash(p){var h=0,s=p+"wsen2";for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h&=h;}return h.toString(36);}
+function hasPin(){return!!localStorage.getItem(PK);}
+function checkPin(p){return localStorage.getItem(PK)===hash(p);}
+function savePin(p){localStorage.setItem(PK,hash(p));localStorage.setItem(SK,JSON.stringify({games:0,bestTime:null,totalWords:0}));}
+function getStats(){try{return JSON.parse(localStorage.getItem(SK))||{games:0,bestTime:null,totalWords:0};}catch(e){return{games:0,bestTime:null,totalWords:0};}}
+function setStats(s){localStorage.setItem(SK,JSON.stringify(s));}
+function getTries(){try{var t=JSON.parse(localStorage.getItem(TK));if(t&&t.d)return t;}catch(e){}return{n:0,d:new Date().toDateString()};}
+function setTries(t){localStorage.setItem(TK,JSON.stringify(t));}
+function canPlay(){var t=getTries();if(t.d!==new Date().toDateString()){t.n=0;t.d=new Date().toDateString();setTries(t);}return{ok:t.n<MAX,left:MAX-t.n};}
+function useTry(){var t=getTries();if(t.d!==new Date().toDateString()){t.n=0;t.d=new Date().toDateString();}t.n++;setTries(t);showBanner();}
+function showBanner(){var c=canPlay();var old=document.querySelector(".banner");if(old)old.remove();var b=document.createElement("div");b.className="banner";b.textContent="🎮 "+c.left+" free "+(c.left===1?"try":"tries");document.body.appendChild(b);}
+function showLimit(){document.getElementById("limitPopup").classList.remove("hidden");}
+function show(id){["loginBox","createBox","dashBox","gameBox"].forEach(function(x){document.getElementById(x).classList.add("hidden");});document.getElementById(id).classList.remove("hidden");}
+function setDots(pre,n){for(var i=1;i<=4;i++){var el=document.getElementById(pre+i);if(el){if(i<=n)el.classList.add("on");else el.classList.remove("on");}}}
+function setMsg(id,t,isErr){var m=document.getElementById(id);m.textContent=t;m.className="msg "+(isErr?"err":"ok");}
+function formatTime(s){var m=Math.floor(s/60);var sec=s%60;return m+":"+(sec<10?"0":"")+sec;}
+function getRating(t){if(!t)return"--";if(t<=60)return"🏆 Expert";if(t<=90)return"⭐ Master";if(t<=120)return"🔥 Good";if(t<=180)return"👍 Average";return"📚 Learning";}
 
-        function hasPIN() {
-            return !!localStorage.getItem(PIN_STORAGE_KEY);
-        }
+var loginPin="";
+var createPin="";
+var confirmPin="";
+var isConfirming=false;
 
-        function createPIN(pin) {
-            const playerId = generatePlayerId();
-            localStorage.setItem(PIN_STORAGE_KEY, hashPIN(pin));
-            localStorage.setItem(PLAYER_ID_KEY, playerId);
-            localStorage.setItem(STATS_KEY, JSON.stringify({
-                gamesPlayed: 0,
-                wordsFound: 0,
-                bestTime: null
-            }));
-            return true;
-        }
+function buildKeypad(containerId,onDigit,onDelete){
+var container=document.getElementById(containerId);
+container.innerHTML="";
+for(var i=1;i<=9;i++){
+(function(digit){
+var btn=document.createElement("button");
+btn.className="key";
+btn.textContent=digit;
+btn.addEventListener("click",function(){onDigit(digit);});
+container.appendChild(btn);
+})(i);
+}
+var emptyBtn=document.createElement("button");
+emptyBtn.className="key empty";
+container.appendChild(emptyBtn);
+var zeroBtn=document.createElement("button");
+zeroBtn.className="key";
+zeroBtn.textContent="0";
+zeroBtn.addEventListener("click",function(){onDigit(0);});
+container.appendChild(zeroBtn);
+var delBtn=document.createElement("button");
+delBtn.className="key";
+delBtn.textContent="⌫";
+delBtn.addEventListener("click",onDelete);
+container.appendChild(delBtn);
+}
 
-        function verifyPIN(pin) {
-            const storedHash = localStorage.getItem(PIN_STORAGE_KEY);
-            return storedHash === hashPIN(pin);
-        }
+function setupLogin(){
+buildKeypad("loginPad",function(digit){
+if(loginPin.length<4){
+loginPin+=digit;
+setDots("d",loginPin.length);
+if(loginPin.length===4){
+setTimeout(function(){
+if(checkPin(loginPin)){
+loadDashboard();
+}else{
+setMsg("loginMsg","Wrong PIN",true);
+loginPin="";
+setDots("d",0);
+}
+},200);
+}
+}
+},function(){
+if(loginPin.length>0){
+loginPin=loginPin.slice(0,-1);
+setDots("d",loginPin.length);
+document.getElementById("loginMsg").textContent="";
+}
+});
+}
 
-        function getStats() {
-            const stats = localStorage.getItem(STATS_KEY);
-            return stats ? JSON.parse(stats) : { gamesPlayed: 0, wordsFound: 0, bestTime: null };
-        }
+function setupCreate(){
+buildKeypad("createPad",function(digit){
+if(confirmPin.length<4){
+confirmPin+=digit;
+setDots("c",confirmPin.length);
+if(confirmPin.length===4){
+setTimeout(function(){
+if(!isConfirming){
+createPin=confirmPin;
+confirmPin="";
+isConfirming=true;
+document.getElementById("createTitle").textContent="Confirm PIN";
+document.getElementById("createSub").textContent="Enter PIN again";
+setDots("c",0);
+}else{
+if(confirmPin===createPin){
+savePin(createPin);
+setMsg("createMsg","PIN created!",false);
+setTimeout(loadDashboard,500);
+}else{
+setMsg("createMsg","PINs don't match",true);
+createPin="";
+confirmPin="";
+isConfirming=false;
+document.getElementById("createTitle").textContent="Create PIN";
+document.getElementById("createSub").textContent="Choose a 4-digit PIN";
+setDots("c",0);
+}
+}
+},200);
+}
+}
+},function(){
+if(confirmPin.length>0){
+confirmPin=confirmPin.slice(0,-1);
+setDots("c",confirmPin.length);
+document.getElementById("createMsg").textContent="";
+}
+});
+}
 
-        function saveStats(stats) {
-            localStorage.setItem(STATS_KEY, JSON.stringify(stats));
-        }
+function loadDashboard(){
+var s=getStats();
+document.getElementById("dGames").textContent=s.games||0;
+document.getElementById("dBest").textContent=s.bestTime?formatTime(s.bestTime):"--";
+document.getElementById("dWords").textContent=s.totalWords||"--";
+document.getElementById("dRate").textContent=getRating(s.bestTime);
+show("dashBox");
+showBanner();
+if(!canPlay().ok)showLimit();
+}
 
-        function logout() {
-            sessionStorage.removeItem('akashic_logged_in');
-        }
+function pickGameWords(){
+var shuffled=WORDS.slice().sort(function(){return Math.random()-0.5;});
+return shuffled.slice(0,8);
+}
 
-        // ==================== UI FUNCTIONS ====================
-        let currentPIN = '';
-        let confirmPIN = '';
-        let isConfirming = false;
+function createEmptyGrid(){
+grid=[];
+for(var r=0;r<SIZE;r++){
+grid[r]=[];
+for(var c=0;c<SIZE;c++){
+grid[r][c]="";
+}
+}
+}
 
-        function showScreen(screenId) {
-            document.querySelectorAll('.container').forEach(el => el.classList.add('hidden'));
-            document.getElementById(screenId).classList.remove('hidden');
-        }
+function canPlaceWord(word,row,col,dr,dc){
+for(var i=0;i<word.length;i++){
+var nr=row+i*dr;
+var nc=col+i*dc;
+if(nr<0||nr>=SIZE||nc<0||nc>=SIZE)return false;
+if(grid[nr][nc]!==""&&grid[nr][nc]!==word[i])return false;
+}
+return true;
+}
 
-        function updatePinDots(prefix, length) {
-            for (let i = 1; i <= 4; i++) {
-                const dot = document.getElementById(prefix + i);
-                if (dot) {
-                    dot.classList.toggle('filled', i <= length);
-                }
-            }
-        }
+function placeWordInGrid(word,row,col,dr,dc){
+for(var i=0;i<word.length;i++){
+grid[row+i*dr][col+i*dc]=word[i];
+}
+}
 
-        function showPinMessage(elementId, message, isError = false) {
-            const el = document.getElementById(elementId);
-            el.textContent = message;
-            el.className = 'pin-message ' + (isError ? 'error' : 'success');
-        }
+function fillGridWithWords(){
+gameWords.forEach(function(word){
+var placed=false;
+var attempts=0;
+while(!placed&&attempts<200){
+var dir=DIRS[Math.floor(Math.random()*DIRS.length)];
+var row=Math.floor(Math.random()*SIZE);
+var col=Math.floor(Math.random()*SIZE);
+if(canPlaceWord(word,row,col,dir[0],dir[1])){
+placeWordInGrid(word,row,col,dir[0],dir[1]);
+placed=true;
+}
+attempts++;
+}
+});
+var letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+for(var r=0;r<SIZE;r++){
+for(var c=0;c<SIZE;c++){
+if(grid[r][c]===""){
+grid[r][c]=letters[Math.floor(Math.random()*26)];
+}
+}
+}
+}
 
-        function clearPinMessage(elementId) {
-            const el = document.getElementById(elementId);
-            el.textContent = '';
-            el.className = 'pin-message';
-        }
+function renderGrid(){
+var container=document.getElementById("grid");
+container.innerHTML="";
+container.style.gridTemplateColumns="repeat("+SIZE+",1fr)";
+for(var r=0;r<SIZE;r++){
+for(var c=0;c<SIZE;c++){
+var cell=document.createElement("div");
+cell.className="cell";
+cell.textContent=grid[r][c];
+cell.setAttribute("data-row",r);
+cell.setAttribute("data-col",c);
+(function(cellEl,row,col){
+cellEl.addEventListener("click",function(e){
+e.preventDefault();
+e.stopPropagation();
+handleCellTap(cellEl,row,col);
+});
+cellEl.addEventListener("touchend",function(e){
+e.preventDefault();
+e.stopPropagation();
+handleCellTap(cellEl,row,col);
+});
+})(cell,r,c);
+container.appendChild(cell);
+}
+}
+}
 
-        // ==================== LOGIN PIN HANDLERS ====================
-        function handleLoginKeyPress(num) {
-            if (currentPIN.length < 4) {
-                currentPIN += num;
-                updatePinDots('dot', currentPIN.length);
-                
-                if (currentPIN.length === 4) {
-                    setTimeout(() => {
-                        if (verifyPIN(currentPIN)) {
-                            sessionStorage.setItem('akashic_logged_in', 'true');
-                            loadDashboard();
-                        } else {
-                            showPinMessage('pinMessage', 'Wrong PIN. Try again.', true);
-                            currentPIN = '';
-                            updatePinDots('dot', 0);
-                        }
-                    }, 200);
-                }
-            }
-        }
+function handleCellTap(cellEl,row,col){
+if(cellEl.classList.contains("found")){
+return;
+}
+var existingIndex=-1;
+for(var i=0;i<selectedCells.length;i++){
+if(selectedCells[i].row===row&&selectedCells[i].col===col){
+existingIndex=i;
+break;
+}
+}
+if(existingIndex>=0){
+selectedCells.splice(existingIndex,1);
+cellEl.classList.remove("selected");
+}else{
+selectedCells.push({row:row,col:col,cell:cellEl});
+cellEl.classList.add("selected");
+}
+updateSelectionDisplay();
+}
 
-        function handleLoginDelete() {
-            if (currentPIN.length > 0) {
-                currentPIN = currentPIN.slice(0, -1);
-                updatePinDots('dot', currentPIN.length);
-                clearPinMessage('pinMessage');
-            }
-        }
+function updateSelectionDisplay(){
+var text="";
+for(var i=0;i<selectedCells.length;i++){
+var r=selectedCells[i].row;
+var c=selectedCells[i].col;
+text+=grid[r][c];
+}
+document.getElementById("selectionText").textContent=text||"-";
+}
 
-        // ==================== CREATE PIN HANDLERS ====================
-        function handleCreateKeyPress(num) {
-            if (confirmPIN.length < 4) {
-                confirmPIN += num;
-                updatePinDots('createDot', confirmPIN.length);
-                
-                if (confirmPIN.length === 4) {
-                    setTimeout(() => {
-                        if (!isConfirming) {
-                            currentPIN = confirmPIN;
-                            confirmPIN = '';
-                            isConfirming = true;
-                            document.getElementById('createPinTitle').textContent = 'Confirm PIN';
-                            document.getElementById('createPinSubtitle').textContent = 'Enter your PIN again';
-                            updatePinDots('createDot', 0);
-                        } else {
-                            if (confirmPIN === currentPIN) {
-                                createPIN(currentPIN);
-                                sessionStorage.setItem('akashic_logged_in', 'true');
-                                showPinMessage('createPinMessage', 'PIN created!', false);
-                                setTimeout(() => loadDashboard(), 500);
-                            } else {
-                                showPinMessage('createPinMessage', 'PINs don\'t match. Try again.', true);
-                                currentPIN = '';
-                                confirmPIN = '';
-                                isConfirming = false;
-                                document.getElementById('createPinTitle').textContent = 'Create PIN';
-                                document.getElementById('createPinSubtitle').textContent = 'Choose a 4-digit PIN';
-                                updatePinDots('createDot', 0);
-                            }
-                        }
-                    }, 200);
-                }
-            }
-        }
+function clearAllSelections(){
+for(var i=0;i<selectedCells.length;i++){
+selectedCells[i].cell.classList.remove("selected");
+selectedCells[i].cell.classList.remove("wrong");
+}
+selectedCells=[];
+updateSelectionDisplay();
+}
 
-        function handleCreateDelete() {
-            if (confirmPIN.length > 0) {
-                confirmPIN = confirmPIN.slice(0, -1);
-                updatePinDots('createDot', confirmPIN.length);
-                clearPinMessage('createPinMessage');
-            }
-        }
+function submitSelection(){
+if(selectedCells.length===0)return;
+var word="";
+for(var i=0;i<selectedCells.length;i++){
+var r=selectedCells[i].row;
+var c=selectedCells[i].col;
+word+=grid[r][c];
+}
+var wordReversed=word.split("").reverse().join("");
+var matchedWord=null;
+for(var j=0;j<gameWords.length;j++){
+var gw=gameWords[j];
+if((word===gw||wordReversed===gw)&&foundWords.indexOf(gw)===-1){
+matchedWord=gw;
+break;
+}
+}
+if(matchedWord){
+foundWords.push(matchedWord);
+for(var k=0;k<selectedCells.length;k++){
+selectedCells[k].cell.classList.remove("selected");
+selectedCells[k].cell.classList.add("found");
+}
+var wordTag=document.getElementById("word_"+matchedWord);
+if(wordTag)wordTag.classList.add("found");
+selectedCells=[];
+updateSelectionDisplay();
+updateGameStatus();
+}else{
+for(var m=0;m<selectedCells.length;m++){
+selectedCells[m].cell.classList.add("wrong");
+}
+setTimeout(function(){
+clearAllSelections();
+},400);
+}
+}
 
-        // ==================== DASHBOARD ====================
-        function loadDashboard() {
-            const stats = getStats();
-            document.getElementById('dashGames').textContent = stats.gamesPlayed || 0;
-            document.getElementById('dashWords').textContent = stats.wordsFound || 0;
-            document.getElementById('dashBestTime').textContent = stats.bestTime ? formatTime(stats.bestTime) : '--';
-            document.getElementById('dashRating').textContent = getRating(stats.wordsFound);
-            showScreen('dashboardScreen');
-        }
+function updateGameStatus(){
+document.getElementById("gFound").textContent=foundWords.length+"/"+gameWords.length;
+if(foundWords.length===gameWords.length){
+endGame();
+}
+}
 
-        function getRating(words) {
-            if (!words) return '--';
-            if (words >= 100) return '🧠 Master';
-            if (words >= 50) return '⭐ Expert';
-            if (words >= 25) return '🔥 Good';
-            if (words >= 10) return '👍 Learning';
-            return '📚 Beginner';
-        }
+function renderWordList(){
+var container=document.getElementById("wordList");
+container.innerHTML="";
+gameWords.forEach(function(w){
+var tag=document.createElement("span");
+tag.className="word-tag";
+tag.textContent=w;
+tag.id="word_"+w;
+container.appendChild(tag);
+});
+}
 
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
+function startGame(){
+if(!canPlay().ok){
+showLimit();
+return;
+}
+gameWords=pickGameWords();
+foundWords=[];
+selectedCells=[];
+createEmptyGrid();
+fillGridWithWords();
+renderGrid();
+renderWordList();
+document.getElementById("gFound").textContent="0/"+gameWords.length;
+document.getElementById("gTime").textContent="0:00";
+document.getElementById("selectionText").textContent="-";
+document.getElementById("resBg").classList.add("hidden");
+show("gameBox");
+startTime=Date.now();
+if(timerInterval)clearInterval(timerInterval);
+timerInterval=setInterval(function(){
+var elapsed=Math.floor((Date.now()-startTime)/1000);
+document.getElementById("gTime").textContent=formatTime(elapsed);
+},1000);
+}
 
-        // ==================== GAME STATE ====================
-        let selectedCategory = 'animals';
-        let gridSize = 10;
-        let grid = [];
-        let wordsToFind = [];
-        let foundWords = [];
-        let selectedCells = [];
-        let isSelecting = false;
-        let gameTimer = null;
-        let timeRemaining = 120;
+function endGame(){
+if(timerInterval)clearInterval(timerInterval);
+var elapsed=Math.floor((Date.now()-startTime)/1000);
+var s=getStats();
+s.games++;
+s.totalWords+=gameWords.length;
+var isRecord=!s.bestTime||elapsed<s.bestTime;
+if(isRecord)s.bestTime=elapsed;
+setStats(s);
+useTry();
+document.getElementById("resTime").textContent=formatTime(elapsed);
+document.getElementById("resWords").textContent=gameWords.length;
+document.getElementById("resAvg").textContent=Math.round(elapsed/gameWords.length)+"s";
+document.getElementById("resRating").textContent="Rating: "+getRating(elapsed);
+if(isRecord){
+document.getElementById("resRecord").classList.remove("hidden");
+}else{
+document.getElementById("resRecord").classList.add("hidden");
+}
+document.getElementById("resIcon").textContent=elapsed<=90?"🏆":"🔍";
+document.getElementById("resBg").classList.remove("hidden");
+if(!canPlay().ok)setTimeout(showLimit,1500);
+}
 
-        // ==================== GAME LOGIC ====================
-        function startGame() {
-            foundWords = [];
-            selectedCells = [];
-            timeRemaining = 120;
-            
-            const allWords = [...wordLists[selectedCategory]];
-            wordsToFind = [];
-            while (wordsToFind.length < 8 && allWords.length > 0) {
-                const idx = Math.floor(Math.random() * allWords.length);
-                const word = allWords.splice(idx, 1)[0];
-                if (word.length <= gridSize) wordsToFind.push(word);
-            }
-            
-            generateGrid();
-            renderGrid();
-            renderWordList();
-            updateGameInfo();
-            startTimer();
-            showScreen('gameScreen');
-        }
+document.addEventListener("DOMContentLoaded",function(){
+setupLogin();
+setupCreate();
 
-        function generateGrid() {
-            grid = [];
-            for (let i = 0; i < gridSize; i++) {
-                grid[i] = [];
-                for (let j = 0; j < gridSize; j++) {
-                    grid[i][j] = { letter: '', wordId: null };
-                }
-            }
-            
-            const directions = [
-                { dr: 0, dc: 1 },
-                { dr: 1, dc: 0 },
-                { dr: 1, dc: 1 },
-                { dr: 1, dc: -1 }
-            ];
-            
-            wordsToFind.forEach((word, wordIdx) => {
-                let placed = false;
-                let attempts = 0;
-                
-                while (!placed && attempts < 100) {
-                    attempts++;
-                    const dir = directions[Math.floor(Math.random() * directions.length)];
-                    const reverse = Math.random() > 0.5;
-                    const wordToPlace = reverse ? word.split('').reverse().join('') : word;
-                    
-                    const maxR = gridSize - (dir.dr > 0 ? word.length : 1);
-                    const maxC = dir.dc > 0 ? gridSize - word.length : (dir.dc < 0 ? gridSize - 1 : gridSize - 1);
-                    const minC = dir.dc < 0 ? word.length - 1 : 0;
-                    
-                    if (maxR < 0 || maxC < minC) continue;
-                    
-                    const startR = Math.floor(Math.random() * (maxR + 1));
-                    const startC = minC + Math.floor(Math.random() * (maxC - minC + 1));
-                    
-                    let canPlace = true;
-                    for (let i = 0; i < word.length; i++) {
-                        const r = startR + i * dir.dr;
-                        const c = startC + i * dir.dc;
-                        if (r < 0 || r >= gridSize || c < 0 || c >= gridSize) { canPlace = false; break; }
-                        if (grid[r][c].letter !== '' && grid[r][c].letter !== wordToPlace[i]) { canPlace = false; break; }
-                    }
-                    
-                    if (canPlace) {
-                        for (let i = 0; i < word.length; i++) {
-                            const r = startR + i * dir.dr;
-                            const c = startC + i * dir.dc;
-                            grid[r][c].letter = wordToPlace[i];
-                            grid[r][c].wordId = wordIdx;
-                        }
-                        placed = true;
-                    }
-                }
-            });
-            
-            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            for (let i = 0; i < gridSize; i++) {
-                for (let j = 0; j < gridSize; j++) {
-                    if (grid[i][j].letter === '') {
-                        grid[i][j].letter = letters[Math.floor(Math.random() * letters.length)];
-                    }
-                }
-            }
-        }
+document.getElementById("toCreate").addEventListener("click",function(){
+createPin="";
+confirmPin="";
+isConfirming=false;
+document.getElementById("createTitle").textContent="Create PIN";
+document.getElementById("createSub").textContent="Choose a 4-digit PIN";
+setDots("c",0);
+document.getElementById("createMsg").textContent="";
+show("createBox");
+});
 
-        function renderGrid() {
-            const gridEl = document.getElementById('wordGrid');
-            gridEl.innerHTML = '';
-            gridEl.style.gridTemplateColumns = `repeat(${gridSize}, 28px)`;
-            
-            for (let i = 0; i < gridSize; i++) {
-                for (let j = 0; j < gridSize; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'grid-cell';
-                    cell.textContent = grid[i][j].letter;
-                    cell.dataset.row = i;
-                    cell.dataset.col = j;
-                    gridEl.appendChild(cell);
-                }
-            }
-            
-            gridEl.addEventListener('mousedown', startSelection);
-            gridEl.addEventListener('mousemove', continueSelection);
-            gridEl.addEventListener('touchstart', handleTouchStart, { passive: false });
-            gridEl.addEventListener('touchmove', handleTouchMove, { passive: false });
-            document.addEventListener('mouseup', endSelection);
-            document.addEventListener('touchend', endSelection);
-        }
+document.getElementById("toLogin").addEventListener("click",function(){
+loginPin="";
+setDots("d",0);
+document.getElementById("loginMsg").textContent="";
+show("loginBox");
+});
 
-        function startSelection(e) {
-            if (e.target.classList.contains('grid-cell') && !e.target.classList.contains('found')) {
-                isSelecting = true;
-                selectedCells = [];
-                selectCell(e.target);
-            }
-        }
+document.getElementById("startBtn").addEventListener("click",function(){
+if(!canPlay().ok){showLimit();return;}
+startGame();
+});
 
-        function continueSelection(e) {
-            if (!isSelecting) return;
-            if (e.target.classList.contains('grid-cell') && !e.target.classList.contains('found')) {
-                selectCell(e.target);
-            }
-        }
+document.getElementById("logoutBtn").addEventListener("click",function(){
+loginPin="";
+setDots("d",0);
+show("loginBox");
+});
 
-        function handleTouchStart(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const cell = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (cell && cell.classList.contains('grid-cell') && !cell.classList.contains('found')) {
-                isSelecting = true;
-                selectedCells = [];
-                selectCell(cell);
-            }
-        }
+document.getElementById("quitBtn").addEventListener("click",function(){
+if(timerInterval)clearInterval(timerInterval);
+loadDashboard();
+});
 
-        function handleTouchMove(e) {
-            e.preventDefault();
-            if (!isSelecting) return;
-            const touch = e.touches[0];
-            const cell = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (cell && cell.classList.contains('grid-cell') && !cell.classList.contains('found')) {
-                selectCell(cell);
-            }
-        }
+document.getElementById("submitBtn").addEventListener("click",submitSelection);
+document.getElementById("clearBtn").addEventListener("click",clearAllSelections);
 
-        function selectCell(cell) {
-            const row = parseInt(cell.dataset.row);
-            const col = parseInt(cell.dataset.col);
-            
-            if (selectedCells.length > 0) {
-                const last = selectedCells[selectedCells.length - 1];
-                const first = selectedCells[0];
-                
-                if (selectedCells.length === 1) {
-                    const dr = row - first.row;
-                    const dc = col - first.col;
-                    if (Math.abs(dr) > 1 || Math.abs(dc) > 1) return;
-                } else {
-                    const dr = selectedCells[1].row - first.row;
-                    const dc = selectedCells[1].col - first.col;
-                    const expectedRow = last.row + dr;
-                    const expectedCol = last.col + dc;
-                    if (row !== expectedRow || col !== expectedCol) return;
-                }
-                
-                if (selectedCells.some(c => c.row === row && c.col === col)) return;
-            }
-            
-            selectedCells.push({ row, col, cell });
-            cell.classList.add('selected');
-        }
+document.getElementById("againBtn").addEventListener("click",function(){
+if(!canPlay().ok){
+document.getElementById("resBg").classList.add("hidden");
+showLimit();
+return;
+}
+startGame();
+});
 
-        function endSelection() {
-            if (!isSelecting) return;
-            isSelecting = false;
-            
-            const selectedWord = selectedCells.map(c => grid[c.row][c.col].letter).join('');
-            const reversedWord = selectedWord.split('').reverse().join('');
-            
-            const matchedWord = wordsToFind.find(w => (w === selectedWord || w === reversedWord) && !foundWords.includes(w));
-            
-            if (matchedWord) {
-                foundWords.push(matchedWord);
-                selectedCells.forEach(c => c.cell.classList.add('found'));
-                const wordItem = document.querySelector(`.word-item[data-word="${matchedWord}"]`);
-                if (wordItem) wordItem.classList.add('found');
-                updateGameInfo();
-                
-                if (foundWords.length === wordsToFind.length) {
-                    endGame(true);
-                }
-            }
-            
-            selectedCells.forEach(c => c.cell.classList.remove('selected'));
-            selectedCells = [];
-        }
+document.getElementById("menuBtn").addEventListener("click",function(){
+document.getElementById("resBg").classList.add("hidden");
+loadDashboard();
+});
 
-        function renderWordList() {
-            const listEl = document.getElementById('wordList');
-            listEl.innerHTML = '';
-            wordsToFind.forEach(word => {
-                const item = document.createElement('div');
-                item.className = 'word-item';
-                item.textContent = word;
-                item.dataset.word = word;
-                listEl.appendChild(item);
-            });
-        }
+document.getElementById("upgradeBtn").addEventListener("click",function(){
+location.href="mailto:support@akashic.works?subject=Pro%20Upgrade";
+});
 
-        function updateGameInfo() {
-            document.getElementById('wordsFound').textContent = `${foundWords.length}/${wordsToFind.length}`;
-        }
-
-        function startTimer() {
-            updateTimerDisplay();
-            gameTimer = setInterval(() => {
-                timeRemaining--;
-                updateTimerDisplay();
-                if (timeRemaining <= 0) endGame(false);
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const timerEl = document.getElementById('gameTimer');
-            timerEl.textContent = formatTime(timeRemaining);
-            timerEl.classList.toggle('warning', timeRemaining <= 30);
-        }
-
-        function endGame(completed) {
-            clearInterval(gameTimer);
-            
-            const timeTaken = 120 - timeRemaining;
-            const score = foundWords.length * 100 + (completed ? Math.max(0, timeRemaining * 5) : 0);
-            
-            // Update stats
-            const stats = getStats();
-            stats.gamesPlayed++;
-            stats.wordsFound = (stats.wordsFound || 0) + foundWords.length;
-            if (completed && (!stats.bestTime || timeTaken < stats.bestTime)) {
-                stats.bestTime = timeTaken;
-            }
-            saveStats(stats);
-            
-            // Show results
-            document.getElementById('resultsTitle').textContent = completed ? '🎉 Great Job!' : '⏰ Time\'s Up!';
-            document.getElementById('resultWords').textContent = `${foundWords.length}/${wordsToFind.length}`;
-            document.getElementById('resultTime').textContent = formatTime(timeTaken);
-            document.getElementById('resultScore').textContent = score;
-            showScreen('resultsScreen');
-        }
-
-        // ==================== EVENT LISTENERS ====================
-        document.addEventListener('DOMContentLoaded', function() {
-            // Login keypad
-            document.querySelectorAll('#pinLoginScreen .pin-key[data-num]').forEach(key => {
-                key.addEventListener('click', () => handleLoginKeyPress(key.dataset.num));
-            });
-            document.querySelector('#pinLoginScreen .pin-key.delete').addEventListener('click', handleLoginDelete);
-            
-            // Create keypad
-            document.querySelectorAll('#pinCreateScreen .pin-key[data-num]').forEach(key => {
-                key.addEventListener('click', () => handleCreateKeyPress(key.dataset.num));
-            });
-            document.querySelector('#pinCreateScreen .pin-key.delete').addEventListener('click', handleCreateDelete);
-            
-            // Toggle links
-            document.getElementById('showCreatePin').addEventListener('click', () => {
-                currentPIN = '';
-                confirmPIN = '';
-                isConfirming = false;
-                clearPinMessage('createPinMessage');
-                document.getElementById('createPinTitle').textContent = 'Create PIN';
-                document.getElementById('createPinSubtitle').textContent = 'Choose a 4-digit PIN';
-                updatePinDots('createDot', 0);
-                showScreen('pinCreateScreen');
-            });
-            
-            document.getElementById('showLoginPin').addEventListener('click', () => {
-                currentPIN = '';
-                clearPinMessage('pinMessage');
-                updatePinDots('dot', 0);
-                showScreen('pinLoginScreen');
-            });
-            
-            // Category selection
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
-                    btn.classList.add('selected');
-                    selectedCategory = btn.dataset.category;
-                });
-            });
-            
-            // Dashboard buttons
-            document.getElementById('startGameBtn').addEventListener('click', startGame);
-            
-            document.getElementById('dashLogoutBtn').addEventListener('click', () => {
-                if (confirm('Logout?')) {
-                    logout();
-                    currentPIN = '';
-                    updatePinDots('dot', 0);
-                    clearPinMessage('pinMessage');
-                    showScreen('pinLoginScreen');
-                }
-            });
-            
-            document.getElementById('backToMenuBtn').addEventListener('click', () => {
-                clearInterval(gameTimer);
-                loadDashboard();
-            });
-            
-            document.getElementById('playAgainBtn').addEventListener('click', startGame);
-            document.getElementById('resultsMenuBtn').addEventListener('click', loadDashboard);
-            
-            // Initialize
-            if (hasPIN()) {
-                showScreen('pinLoginScreen');
-            } else {
-                showScreen('pinCreateScreen');
-            }
-        });
-    </script>
+if(hasPin()){
+show("loginBox");
+}else{
+show("createBox");
+}
+});
+})();
+</script>
 </body>
 </html>

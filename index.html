@@ -1,622 +1,69 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Akashic Word Search</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Georgia,serif;background:linear-gradient(135deg,#0a0e27,#1a1034,#2d1b4e);min-height:100vh;color:#e8e8f0;display:flex;flex-direction:column;align-items:center;padding:15px;-webkit-tap-highlight-color:transparent}
-.title{font-size:2em;background:linear-gradient(135deg,#ffd700,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:5px;text-align:center}
-.subtitle{color:#d4af37;margin-bottom:20px;font-size:0.95em}
-.box{background:rgba(255,255,255,0.05);border:2px solid rgba(212,175,55,0.5);border-radius:18px;padding:20px;width:100%;max-width:500px}
-.hidden{display:none!important}
-.banner{position:fixed;top:15px;right:15px;background:rgba(255,215,0,0.2);border:2px solid rgba(255,215,0,0.5);color:#ffd700;padding:8px 14px;border-radius:12px;font-size:0.85em;z-index:100}
-.back{position:fixed;top:15px;left:15px;padding:8px 14px;background:rgba(255,255,255,0.1);border:2px solid rgba(212,175,55,0.3);border-radius:15px;color:#ffd700;text-decoration:none;font-size:0.85em;z-index:100}
-.popup-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;z-index:5000;padding:20px}
-.popup{background:linear-gradient(135deg,#1a1034,#2d1b4e);border:2px solid rgba(255,215,0,0.3);border-radius:18px;padding:25px;max-width:300px;text-align:center}
-.popup-emoji{font-size:2.5em;margin-bottom:10px}
-.popup h3{color:#e8e8f0;margin-bottom:5px}
-.popup p{color:#a0a0b8;font-size:0.9em;margin-bottom:20px}
-.popup a{display:block;padding:12px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);border-radius:10px;color:#e8e8f0;text-decoration:none;margin-bottom:15px}
-.popup button{width:100%;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#1a1034;border:none;padding:12px;border-radius:20px;font-weight:bold;cursor:pointer;font-family:Georgia,serif}
-.pin-title{color:#ffd700;font-size:1.3em;text-align:center;margin-bottom:8px}
-.pin-sub{color:#b8b8cc;text-align:center;margin-bottom:20px;font-size:0.9em}
-.dots{display:flex;justify-content:center;gap:12px;margin-bottom:20px}
-.dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(212,175,55,0.5)}
-.dot.on{background:#ffd700;border-color:#ffd700}
-.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:0 auto 15px}
-.key{aspect-ratio:1;font-size:1.4em;border:2px solid rgba(212,175,55,0.3);background:rgba(255,255,255,0.05);color:#e8e8f0;border-radius:10px;cursor:pointer;font-family:Georgia,serif}
-.key:active{transform:scale(0.95)}
-.key.empty{visibility:hidden}
-.msg{text-align:center;min-height:20px;font-size:0.9em}
-.msg.err{color:#ff6b6b}
-.msg.ok{color:#4ecdc4}
-.toggle{text-align:center;margin-top:18px;color:#b8b8cc;font-size:0.9em}
-.toggle span{color:#ffd700;cursor:pointer;text-decoration:underline}
-.btn{width:100%;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#1a1034;border:none;padding:14px;border-radius:22px;font-size:1em;font-weight:bold;cursor:pointer;margin-top:8px;font-family:Georgia,serif}
-.btn:hover{box-shadow:0 5px 20px rgba(255,215,0,0.5)}
-.btn2{background:linear-gradient(135deg,#8a2be2,#4b0082);color:#fff}
-.btn3{background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff}
-.welcome{background:rgba(255,215,0,0.1);border:2px solid rgba(255,215,0,0.3);border-radius:12px;padding:15px;margin-bottom:15px;text-align:center}
-.welcome h3{color:#ffd700;margin-bottom:5px}
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:15px 0}
-.stat{background:rgba(255,255,255,0.05);padding:12px;border-radius:10px;text-align:center;border:1px solid rgba(212,175,55,0.2)}
-.stat b{display:block;font-size:1.5em;color:#ffd700}
-.stat span{color:#b8b8cc;font-size:0.75em}
-.hdr{display:flex;justify-content:space-between;padding:10px 12px;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:10px}
-.hdr div{text-align:center}
-.hdr b{color:#ffd700;font-size:1.1em}
-.hdr span{color:#b8b8cc;font-size:0.6em;display:block}
-.selection-box{background:rgba(255,215,0,0.15);border:2px solid rgba(255,215,0,0.4);border-radius:10px;padding:12px;margin-bottom:10px;text-align:center;min-height:50px}
-.selection-label{color:#b8b8cc;font-size:0.75em;margin-bottom:5px}
-.selection-text{color:#ffd700;font-size:1.5em;font-weight:bold;letter-spacing:4px;min-height:30px;word-break:break-all}
-.grid-container{background:rgba(0,0,0,0.3);border-radius:12px;padding:10px;margin-bottom:10px;border:2px solid rgba(212,175,55,0.3)}
-.grid{display:grid;gap:4px;user-select:none;touch-action:manipulation}
-.cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:1.1em;font-weight:bold;background:rgba(255,255,255,0.12);border-radius:6px;cursor:pointer;text-transform:uppercase;color:#e8e8f0;border:2px solid transparent;transition:background 0.1s,transform 0.1s}
-.cell.selected{background:rgba(255,215,0,0.6);color:#000;border-color:#ffd700;transform:scale(1.05);box-shadow:0 0 10px rgba(255,215,0,0.5)}
-.cell.found{background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;border-color:#27ae60}
-.cell.found.selected{background:linear-gradient(135deg,#2ecc71,#27ae60)}
-.cell.wrong{background:rgba(231,76,60,0.6);animation:shake 0.3s}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-.action-row{display:flex;gap:10px;margin-bottom:10px}
-.action-row .btn{flex:1;margin:0;padding:12px}
-.words-box{margin:10px 0}
-.words-label{color:#b8b8cc;font-size:0.8em;text-align:center;margin-bottom:8px}
-.words-list{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.word-tag{padding:6px 12px;background:rgba(255,255,255,0.1);border-radius:20px;font-size:0.85em;border:2px solid rgba(212,175,55,0.3);color:#e8e8f0}
-.word-tag.found{background:rgba(46,204,113,0.3);border-color:#2ecc71;text-decoration:line-through;color:#2ecc71}
-.info{background:rgba(138,43,226,0.15);border:2px solid rgba(138,43,226,0.3);border-radius:10px;padding:10px;margin-top:10px}
-.info h4{color:#8a2be2;margin-bottom:5px;text-align:center;font-size:0.85em}
-.info p{color:#c4c4d4;font-size:0.78em;line-height:1.4;text-align:center}
-.res-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;justify-content:center;align-items:center;z-index:3000;padding:20px}
-.res{background:linear-gradient(135deg,#1a1034,#2d1b4e);border:3px solid #ffd700;border-radius:20px;padding:25px 20px;max-width:350px;width:100%;text-align:center;animation:zoomIn 0.3s}
-@keyframes zoomIn{from{transform:scale(0.8);opacity:0}to{transform:scale(1);opacity:1}}
-.res-icon{font-size:3em;margin-bottom:10px}
-.res h2{color:#ffd700;margin-bottom:10px}
-.res-score{font-size:2.5em;color:#ffd700;font-weight:bold}
-.res-label{color:#b8b8cc;margin-bottom:15px}
-.res-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:15px}
-.res-stat{background:rgba(255,255,255,0.05);padding:10px;border-radius:8px}
-.res-stat b{color:#ffd700;font-size:1.3em;display:block}
-.res-stat span{color:#b8b8cc;font-size:0.7em}
-.record{background:rgba(255,215,0,0.2);border:2px solid #ffd700;border-radius:8px;padding:10px;margin:12px 0;color:#ffd700;font-weight:bold}
-.rating{color:#d4af37;margin-bottom:15px}
-@media(max-width:400px){.cell{font-size:0.95em}.selection-text{font-size:1.3em}}
-@media(max-width:500px){.back,.banner{position:relative;top:auto;left:auto;right:auto;margin:0 5px 10px;display:inline-block}}
-</style>
-</head>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Word Search</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Georgia,serif;background:linear-gradient(135deg,#0a0e27,#1a1034,#2d1b4e);min-height:100vh;color:#e8e8f0;display:flex;flex-direction:column;align-items:center;padding:8px;user-select:none;-webkit-user-select:none}.title{font-size:1.4em;background:linear-gradient(135deg,#ffd700,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.subtitle{color:#d4af37;margin-bottom:6px;font-size:0.8em}.box{background:rgba(255,255,255,0.05);border:2px solid rgba(212,175,55,0.5);border-radius:12px;padding:10px;width:calc(100% - 16px);max-width:340px}.hidden{display:none!important}.banner,.back{padding:4px 8px;border-radius:8px;font-size:0.7em}.banner{background:rgba(255,215,0,0.2);border:1px solid rgba(255,215,0,0.5);color:#ffd700}.back{background:rgba(255,255,255,0.1);border:1px solid rgba(212,175,55,0.3);color:#ffd700;text-decoration:none}.top-bar{width:calc(100% - 16px);max-width:340px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.popup-bg{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;z-index:5000}.popup{background:linear-gradient(135deg,#1a1034,#2d1b4e);border:2px solid rgba(255,215,0,0.3);border-radius:12px;padding:16px;width:90%;max-width:260px;text-align:center}.popup h3{color:#e8e8f0}.popup p{color:#a0a0b8;font-size:0.75em;margin:8px 0}.popup a{display:block;padding:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:#e8e8f0;text-decoration:none;margin-bottom:10px}.btn{width:100%;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#1a1034;border:none;padding:10px;border-radius:12px;font-weight:bold;cursor:pointer;margin-top:5px}.btn2{background:linear-gradient(135deg,#8a2be2,#4b0082);color:#fff}.pin-title{color:#ffd700;font-size:1em;text-align:center;margin-bottom:4px}.pin-sub{color:#b8b8cc;text-align:center;margin-bottom:12px;font-size:0.75em}.dots{display:flex;justify-content:center;gap:8px;margin-bottom:12px}.dot{width:12px;height:12px;border-radius:50%;border:2px solid rgba(212,175,55,0.5)}.dot.on{background:#ffd700;border-color:#ffd700}.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;max-width:180px;margin:0 auto 10px}.key{aspect-ratio:1;font-size:1.1em;border:2px solid rgba(212,175,55,0.3);background:rgba(255,255,255,0.05);color:#e8e8f0;border-radius:6px;cursor:pointer}.key.empty{visibility:hidden}.msg{text-align:center;min-height:16px;font-size:0.75em}.msg.err{color:#ff6b6b}.msg.ok{color:#4ecdc4}.toggle{text-align:center;margin-top:10px;color:#b8b8cc;font-size:0.75em}.toggle span{color:#ffd700;cursor:pointer;text-decoration:underline}.welcome{background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);border-radius:8px;padding:10px;margin-bottom:10px;text-align:center}.welcome h3{color:#ffd700}.welcome p{font-size:0.75em;color:#b8b8cc}.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:10px 0}.stat{background:rgba(255,255,255,0.05);padding:8px;border-radius:6px;text-align:center;border:1px solid rgba(212,175,55,0.2)}.stat b{display:block;font-size:1.2em;color:#ffd700}.stat span{color:#b8b8cc;font-size:0.65em}.game-info{display:flex;justify-content:space-between;margin-bottom:8px}.game-stat{text-align:center}.game-stat b{display:block;font-size:1.1em;color:#ffd700}.game-stat span{color:#b8b8cc;font-size:0.65em}.grid-area{background:rgba(0,0,0,0.3);border-radius:12px;padding:8px;margin:8px 0}.grid{display:grid;gap:3px;max-width:280px;margin:0 auto}.cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:1em;font-weight:bold;background:rgba(255,255,255,0.1);border-radius:4px;cursor:pointer}.cell.sel{background:rgba(255,215,0,0.5);color:#fff}.cell.found{background:rgba(46,204,113,0.5);color:#fff}.words{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0}.word{padding:4px 8px;background:rgba(255,255,255,0.1);border-radius:6px;font-size:0.75em;color:#b8b8cc}.word.done{background:rgba(46,204,113,0.3);color:#2ecc71;text-decoration:line-through}.timer{height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin:8px 0;overflow:hidden}.timer div{height:100%;width:100%;background:linear-gradient(90deg,#e74c3c,#f39c12,#2ecc71)}.res-bg{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;justify-content:center;align-items:center;z-index:3000}.res{background:linear-gradient(135deg,#1a1034,#2d1b4e);border:2px solid #ffd700;border-radius:12px;padding:16px;width:90%;max-width:300px;text-align:center}.res h2{color:#ffd700}.res-score{font-size:2.5em;color:#ffd700;font-weight:bold}.res-label{color:#b8b8cc;margin-bottom:10px}.res-det{display:flex;justify-content:space-around;margin:10px 0}.res-det div b{display:block;color:#ffd700;font-size:1.2em}.res-det div span{color:#b8b8cc;font-size:0.7em}.record{background:rgba(255,215,0,0.2);border:1px solid #ffd700;border-radius:5px;padding:6px;margin:8px 0;color:#ffd700;font-weight:bold}.rating{color:#d4af37;margin-bottom:10px}.name-input{width:100%;padding:10px;background:rgba(255,255,255,0.1);border:2px solid rgba(212,175,55,0.5);border-radius:8px;color:#e8e8f0;font-size:1em;margin-bottom:10px;text-align:center}</style></head>
 <body>
-<a href="https://hooporiapr-oss.github.io/akashic-works/" class="back">← Home</a>
-<div class="title">🔍 Word Search</div>
-<div class="subtitle">Brain Training Edition</div>
-
-<div class="box" id="loginBox">
-<div class="pin-title">Enter PIN</div>
-<div class="pin-sub">Enter your 4-digit PIN</div>
-<div class="dots"><div class="dot" id="d1"></div><div class="dot" id="d2"></div><div class="dot" id="d3"></div><div class="dot" id="d4"></div></div>
-<div class="keypad" id="loginPad"></div>
-<div class="msg" id="loginMsg"></div>
-<div class="toggle">No account? <span id="toCreate">Create PIN</span></div>
-</div>
-
-<div class="box hidden" id="createBox">
-<div class="pin-title" id="createTitle">Create PIN</div>
-<div class="pin-sub" id="createSub">Choose a 4-digit PIN</div>
-<div class="dots"><div class="dot" id="c1"></div><div class="dot" id="c2"></div><div class="dot" id="c3"></div><div class="dot" id="c4"></div></div>
-<div class="keypad" id="createPad"></div>
-<div class="msg" id="createMsg"></div>
-<div class="toggle">Have a PIN? <span id="toLogin">Login</span></div>
-</div>
-
-<div class="box hidden" id="dashBox">
-<div class="welcome"><h3>Welcome Back! 🧠</h3><p style="color:#b8b8cc">Find hidden brain words</p></div>
-<div class="stats">
-<div class="stat"><b id="dGames">0</b><span>Games</span></div>
-<div class="stat"><b id="dBest">--</b><span>Best Time</span></div>
-<div class="stat"><b id="dWords">--</b><span>Words Found</span></div>
-<div class="stat"><b id="dRate">--</b><span>Rating</span></div>
-</div>
-<button class="btn" id="startBtn">🔍 Start Game</button>
-<button class="btn btn2" id="logoutBtn">Logout</button>
-</div>
-
-<div class="box hidden" id="gameBox">
-<div class="hdr">
-<div><b id="gFound">0/8</b><span>FOUND</span></div>
-<div><b id="gTime">0:00</b><span>TIME</span></div>
-</div>
-<div class="selection-box">
-<div class="selection-label">Your selection (tap letters):</div>
-<div class="selection-text" id="selectionText">-</div>
-</div>
-<div class="grid-container">
-<div class="grid" id="grid"></div>
-</div>
-<div class="action-row">
-<button class="btn" id="submitBtn">✓ Submit</button>
-<button class="btn btn3" id="clearBtn">✗ Clear</button>
-</div>
-<div class="words-box">
-<div class="words-label">Words to find:</div>
-<div class="words-list" id="wordList"></div>
-</div>
-<button class="btn btn2" id="quitBtn">← Quit</button>
-<div class="info">
-<h4>🧠 How to Play</h4>
-<p>Tap each letter one by one to build a word. Press "Submit" to confirm or "Clear" to start over.</p>
-</div>
-</div>
-
-<div class="res-bg hidden" id="resBg">
-<div class="res">
-<div class="res-icon" id="resIcon">🔍</div>
-<h2>Puzzle Complete!</h2>
-<div class="res-score" id="resTime">0:00</div>
-<div class="res-label">Total Time</div>
-<div class="res-stats">
-<div class="res-stat"><b id="resWords">8</b><span>Words</span></div>
-<div class="res-stat"><b id="resAvg">0s</b><span>Avg/Word</span></div>
-</div>
-<div class="record hidden" id="resRecord">🏆 New Record!</div>
-<div class="rating" id="resRating">Rating: --</div>
-<button class="btn" id="againBtn">🔄 Play Again</button>
-<button class="btn btn2" id="menuBtn">Menu</button>
-</div>
-</div>
-
-<div class="popup-bg hidden" id="limitPopup">
-<div class="popup">
-<div class="popup-emoji">⏸️</div>
-<h3>Daily limit reached</h3>
-<p>You've used 3 free plays today</p>
-<a href="https://hooporiapr-oss.github.io/akashic-works/">Return Home</a>
-<button id="upgradeBtn">Unlock Unlimited</button>
-</div>
-</div>
-
+<div class="top-bar"><a href="https://hooporiapr-oss.github.io/akashic-works/" class="back">Home</a><div class="banner" id="ban">3 free</div></div>
+<div class="title">Word Search</div><div class="subtitle">Brain Training</div>
+<div class="box" id="loginBox"><div class="pin-title">Enter PIN</div><div class="pin-sub">Enter your 4-digit PIN</div><div class="dots" id="ld"></div><div class="keypad" id="lk"></div><div class="msg" id="lm"></div><div class="toggle">No account? <span id="toC">Create PIN</span></div></div>
+<div class="box hidden" id="createBox"><div class="pin-title" id="ct">Create PIN</div><div class="pin-sub" id="cs">Choose a 4-digit PIN</div><div class="dots" id="cd"></div><div class="keypad" id="ck"></div><div class="msg" id="cm"></div><div class="toggle">Have a PIN? <span id="toL">Login</span></div></div>
+<div class="box hidden" id="nameBox"><div class="pin-title">Set Display Name</div><div class="pin-sub">Choose a name</div><input type="text" class="name-input" id="nameIn" placeholder="Your name" maxlength="15"><button class="btn" id="saveN">Save Name</button><div class="msg" id="nm"></div></div>
+<div class="box hidden" id="dashBox"><div class="welcome"><h3 id="wn">Welcome!</h3><p>Find all hidden words!</p></div><div class="stats"><div class="stat"><b id="dG">0</b><span>Games</span></div><div class="stat"><b id="dB">--</b><span>Best</span></div><div class="stat"><b id="dA">--</b><span>Average</span></div><div class="stat"><b id="dR">--</b><span>Rating</span></div></div><button class="btn" id="startB">Start Game</button><button class="btn btn2" id="outB">Logout</button></div>
+<div class="box hidden" id="gameBox"><div class="game-info"><div class="game-stat"><b id="gF">0/6</b><span>Found</span></div><div class="game-stat"><b id="gS">0</b><span>Score</span></div><div class="game-stat"><b id="gT">90</b><span>Time</span></div></div><div class="timer"><div id="tmr"></div></div><div class="words" id="wList"></div><div class="grid-area"><div class="grid" id="grid"></div></div><button class="btn btn2" id="quitB">Quit</button></div>
+<div class="res-bg hidden" id="resB"><div class="res"><h2>Results</h2><div class="res-score" id="rsS">0</div><div class="res-label">Points</div><div class="res-det"><div><b id="rsF">0</b><span>Found</span></div><div><b id="rsT">0</b><span>Time Left</span></div></div><div class="record hidden" id="rsR">New Record!</div><div class="rating" id="rsRt">Rating: --</div><button class="btn" id="again">Play Again</button><button class="btn btn2" id="menu">Menu</button></div></div>
+<div class="popup-bg hidden" id="limP"><div class="popup"><h3 id="limT">Daily limit</h3><p id="limM">You used 3 free games</p><a href="https://hooporiapr-oss.github.io/akashic-works/">Return Home</a><button class="btn" id="upg">Unlock Unlimited</button></div></div>
 <script>
-(function(){
-var PK="wsen2_pin",SK="wsen2_stats",TK="wsen2_tries",MAX=3;
-var WORDS=[
-"BRAIN","MEMORY","FOCUS","THINK","MIND","LOGIC","PUZZLE","SMART",
-"NEURON","CORTEX","REFLEX","SPEED","SKILL","TRAIN","LEARN","RECALL",
-"REASON","SOLVE","QUICK","SHARP","ALERT","CLEVER","MENTAL","WISE"
-];
-var SIZE=10;
-var DIRS=[[0,1],[1,0],[1,1],[0,-1],[-1,0],[-1,-1],[1,-1],[-1,1]];
-
-var grid=[];
-var gameWords=[];
-var foundWords=[];
-var selectedCells=[];
-var startTime=0;
-var timerInterval=null;
-
-function hash(p){var h=0,s=p+"wsen2";for(var i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h&=h;}return h.toString(36);}
-function hasPin(){return!!localStorage.getItem(PK);}
-function checkPin(p){return localStorage.getItem(PK)===hash(p);}
-function savePin(p){localStorage.setItem(PK,hash(p));localStorage.setItem(SK,JSON.stringify({games:0,bestTime:null,totalWords:0}));}
-function getStats(){try{return JSON.parse(localStorage.getItem(SK))||{games:0,bestTime:null,totalWords:0};}catch(e){return{games:0,bestTime:null,totalWords:0};}}
-function setStats(s){localStorage.setItem(SK,JSON.stringify(s));}
-function getTries(){try{var t=JSON.parse(localStorage.getItem(TK));if(t&&t.d)return t;}catch(e){}return{n:0,d:new Date().toDateString()};}
-function setTries(t){localStorage.setItem(TK,JSON.stringify(t));}
-function canPlay(){var t=getTries();if(t.d!==new Date().toDateString()){t.n=0;t.d=new Date().toDateString();setTries(t);}return{ok:t.n<MAX,left:MAX-t.n};}
-function useTry(){var t=getTries();if(t.d!==new Date().toDateString()){t.n=0;t.d=new Date().toDateString();}t.n++;setTries(t);showBanner();}
-function showBanner(){var c=canPlay();var old=document.querySelector(".banner");if(old)old.remove();var b=document.createElement("div");b.className="banner";b.textContent="🎮 "+c.left+" free "+(c.left===1?"try":"tries");document.body.appendChild(b);}
-function showLimit(){document.getElementById("limitPopup").classList.remove("hidden");}
-function show(id){["loginBox","createBox","dashBox","gameBox"].forEach(function(x){document.getElementById(x).classList.add("hidden");});document.getElementById(id).classList.remove("hidden");}
-function setDots(pre,n){for(var i=1;i<=4;i++){var el=document.getElementById(pre+i);if(el){if(i<=n)el.classList.add("on");else el.classList.remove("on");}}}
-function setMsg(id,t,isErr){var m=document.getElementById(id);m.textContent=t;m.className="msg "+(isErr?"err":"ok");}
-function formatTime(s){var m=Math.floor(s/60);var sec=s%60;return m+":"+(sec<10?"0":"")+sec;}
-function getRating(t){if(!t)return"--";if(t<=60)return"🏆 Expert";if(t<=90)return"⭐ Master";if(t<=120)return"🔥 Good";if(t<=180)return"👍 Average";return"📚 Learning";}
-
-var loginPin="";
-var createPin="";
-var confirmPin="";
-var isConfirming=false;
-
-function buildKeypad(containerId,onDigit,onDelete){
-var container=document.getElementById(containerId);
-container.innerHTML="";
-for(var i=1;i<=9;i++){
-(function(digit){
-var btn=document.createElement("button");
-btn.className="key";
-btn.textContent=digit;
-btn.addEventListener("click",function(){onDigit(digit);});
-container.appendChild(btn);
-})(i);
-}
-var emptyBtn=document.createElement("button");
-emptyBtn.className="key empty";
-container.appendChild(emptyBtn);
-var zeroBtn=document.createElement("button");
-zeroBtn.className="key";
-zeroBtn.textContent="0";
-zeroBtn.addEventListener("click",function(){onDigit(0);});
-container.appendChild(zeroBtn);
-var delBtn=document.createElement("button");
-delBtn.className="key";
-delBtn.textContent="⌫";
-delBtn.addEventListener("click",onDelete);
-container.appendChild(delBtn);
-}
-
-function setupLogin(){
-buildKeypad("loginPad",function(digit){
-if(loginPin.length<4){
-loginPin+=digit;
-setDots("d",loginPin.length);
-if(loginPin.length===4){
-setTimeout(function(){
-if(checkPin(loginPin)){
-loadDashboard();
-}else{
-setMsg("loginMsg","Wrong PIN",true);
-loginPin="";
-setDots("d",0);
-}
-},200);
-}
-}
-},function(){
-if(loginPin.length>0){
-loginPin=loginPin.slice(0,-1);
-setDots("d",loginPin.length);
-document.getElementById("loginMsg").textContent="";
-}
-});
-}
-
-function setupCreate(){
-buildKeypad("createPad",function(digit){
-if(confirmPin.length<4){
-confirmPin+=digit;
-setDots("c",confirmPin.length);
-if(confirmPin.length===4){
-setTimeout(function(){
-if(!isConfirming){
-createPin=confirmPin;
-confirmPin="";
-isConfirming=true;
-document.getElementById("createTitle").textContent="Confirm PIN";
-document.getElementById("createSub").textContent="Enter PIN again";
-setDots("c",0);
-}else{
-if(confirmPin===createPin){
-savePin(createPin);
-setMsg("createMsg","PIN created!",false);
-setTimeout(loadDashboard,500);
-}else{
-setMsg("createMsg","PINs don't match",true);
-createPin="";
-confirmPin="";
-isConfirming=false;
-document.getElementById("createTitle").textContent="Create PIN";
-document.getElementById("createSub").textContent="Choose a 4-digit PIN";
-setDots("c",0);
-}
-}
-},200);
-}
-}
-},function(){
-if(confirmPin.length>0){
-confirmPin=confirmPin.slice(0,-1);
-setDots("c",confirmPin.length);
-document.getElementById("createMsg").textContent="";
-}
-});
-}
-
-function loadDashboard(){
-var s=getStats();
-document.getElementById("dGames").textContent=s.games||0;
-document.getElementById("dBest").textContent=s.bestTime?formatTime(s.bestTime):"--";
-document.getElementById("dWords").textContent=s.totalWords||"--";
-document.getElementById("dRate").textContent=getRating(s.bestTime);
-show("dashBox");
-showBanner();
-if(!canPlay().ok)showLimit();
-}
-
-function pickGameWords(){
-var shuffled=WORDS.slice().sort(function(){return Math.random()-0.5;});
-return shuffled.slice(0,8);
-}
-
-function createEmptyGrid(){
-grid=[];
-for(var r=0;r<SIZE;r++){
-grid[r]=[];
-for(var c=0;c<SIZE;c++){
-grid[r][c]="";
-}
-}
-}
-
-function canPlaceWord(word,row,col,dr,dc){
-for(var i=0;i<word.length;i++){
-var nr=row+i*dr;
-var nc=col+i*dc;
-if(nr<0||nr>=SIZE||nc<0||nc>=SIZE)return false;
-if(grid[nr][nc]!==""&&grid[nr][nc]!==word[i])return false;
-}
-return true;
-}
-
-function placeWordInGrid(word,row,col,dr,dc){
-for(var i=0;i<word.length;i++){
-grid[row+i*dr][col+i*dc]=word[i];
-}
-}
-
-function fillGridWithWords(){
-gameWords.forEach(function(word){
-var placed=false;
-var attempts=0;
-while(!placed&&attempts<200){
-var dir=DIRS[Math.floor(Math.random()*DIRS.length)];
-var row=Math.floor(Math.random()*SIZE);
-var col=Math.floor(Math.random()*SIZE);
-if(canPlaceWord(word,row,col,dir[0],dir[1])){
-placeWordInGrid(word,row,col,dir[0],dir[1]);
-placed=true;
-}
-attempts++;
-}
-});
-var letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-for(var r=0;r<SIZE;r++){
-for(var c=0;c<SIZE;c++){
-if(grid[r][c]===""){
-grid[r][c]=letters[Math.floor(Math.random()*26)];
-}
-}
-}
-}
-
-function renderGrid(){
-var container=document.getElementById("grid");
-container.innerHTML="";
-container.style.gridTemplateColumns="repeat("+SIZE+",1fr)";
-for(var r=0;r<SIZE;r++){
-for(var c=0;c<SIZE;c++){
-var cell=document.createElement("div");
-cell.className="cell";
-cell.textContent=grid[r][c];
-cell.setAttribute("data-row",r);
-cell.setAttribute("data-col",c);
-(function(cellEl,row,col){
-cellEl.addEventListener("click",function(e){
-e.preventDefault();
-e.stopPropagation();
-handleCellTap(cellEl,row,col);
-});
-cellEl.addEventListener("touchend",function(e){
-e.preventDefault();
-e.stopPropagation();
-handleCellTap(cellEl,row,col);
-});
-})(cell,r,c);
-container.appendChild(cell);
-}
-}
-}
-
-function handleCellTap(cellEl,row,col){
-if(cellEl.classList.contains("found")){
-return;
-}
-var existingIndex=-1;
-for(var i=0;i<selectedCells.length;i++){
-if(selectedCells[i].row===row&&selectedCells[i].col===col){
-existingIndex=i;
-break;
-}
-}
-if(existingIndex>=0){
-selectedCells.splice(existingIndex,1);
-cellEl.classList.remove("selected");
-}else{
-selectedCells.push({row:row,col:col,cell:cellEl});
-cellEl.classList.add("selected");
-}
-updateSelectionDisplay();
-}
-
-function updateSelectionDisplay(){
-var text="";
-for(var i=0;i<selectedCells.length;i++){
-var r=selectedCells[i].row;
-var c=selectedCells[i].col;
-text+=grid[r][c];
-}
-document.getElementById("selectionText").textContent=text||"-";
-}
-
-function clearAllSelections(){
-for(var i=0;i<selectedCells.length;i++){
-selectedCells[i].cell.classList.remove("selected");
-selectedCells[i].cell.classList.remove("wrong");
-}
-selectedCells=[];
-updateSelectionDisplay();
-}
-
-function submitSelection(){
-if(selectedCells.length===0)return;
-var word="";
-for(var i=0;i<selectedCells.length;i++){
-var r=selectedCells[i].row;
-var c=selectedCells[i].col;
-word+=grid[r][c];
-}
-var wordReversed=word.split("").reverse().join("");
-var matchedWord=null;
-for(var j=0;j<gameWords.length;j++){
-var gw=gameWords[j];
-if((word===gw||wordReversed===gw)&&foundWords.indexOf(gw)===-1){
-matchedWord=gw;
-break;
-}
-}
-if(matchedWord){
-foundWords.push(matchedWord);
-for(var k=0;k<selectedCells.length;k++){
-selectedCells[k].cell.classList.remove("selected");
-selectedCells[k].cell.classList.add("found");
-}
-var wordTag=document.getElementById("word_"+matchedWord);
-if(wordTag)wordTag.classList.add("found");
-selectedCells=[];
-updateSelectionDisplay();
-updateGameStatus();
-}else{
-for(var m=0;m<selectedCells.length;m++){
-selectedCells[m].cell.classList.add("wrong");
-}
-setTimeout(function(){
-clearAllSelections();
-},400);
-}
-}
-
-function updateGameStatus(){
-document.getElementById("gFound").textContent=foundWords.length+"/"+gameWords.length;
-if(foundWords.length===gameWords.length){
-endGame();
-}
-}
-
-function renderWordList(){
-var container=document.getElementById("wordList");
-container.innerHTML="";
-gameWords.forEach(function(w){
-var tag=document.createElement("span");
-tag.className="word-tag";
-tag.textContent=w;
-tag.id="word_"+w;
-container.appendChild(tag);
-});
-}
-
-function startGame(){
-if(!canPlay().ok){
-showLimit();
-return;
-}
-gameWords=pickGameWords();
-foundWords=[];
-selectedCells=[];
-createEmptyGrid();
-fillGridWithWords();
-renderGrid();
-renderWordList();
-document.getElementById("gFound").textContent="0/"+gameWords.length;
-document.getElementById("gTime").textContent="0:00";
-document.getElementById("selectionText").textContent="-";
-document.getElementById("resBg").classList.add("hidden");
-show("gameBox");
-startTime=Date.now();
-if(timerInterval)clearInterval(timerInterval);
-timerInterval=setInterval(function(){
-var elapsed=Math.floor((Date.now()-startTime)/1000);
-document.getElementById("gTime").textContent=formatTime(elapsed);
-},1000);
-}
-
-function endGame(){
-if(timerInterval)clearInterval(timerInterval);
-var elapsed=Math.floor((Date.now()-startTime)/1000);
-var s=getStats();
-s.games++;
-s.totalWords+=gameWords.length;
-var isRecord=!s.bestTime||elapsed<s.bestTime;
-if(isRecord)s.bestTime=elapsed;
-setStats(s);
-useTry();
-document.getElementById("resTime").textContent=formatTime(elapsed);
-document.getElementById("resWords").textContent=gameWords.length;
-document.getElementById("resAvg").textContent=Math.round(elapsed/gameWords.length)+"s";
-document.getElementById("resRating").textContent="Rating: "+getRating(elapsed);
-if(isRecord){
-document.getElementById("resRecord").classList.remove("hidden");
-}else{
-document.getElementById("resRecord").classList.add("hidden");
-}
-document.getElementById("resIcon").textContent=elapsed<=90?"🏆":"🔍";
-document.getElementById("resBg").classList.remove("hidden");
-if(!canPlay().ok)setTimeout(showLimit,1500);
-}
-
-document.addEventListener("DOMContentLoaded",function(){
-setupLogin();
-setupCreate();
-
-document.getElementById("toCreate").addEventListener("click",function(){
-createPin="";
-confirmPin="";
-isConfirming=false;
-document.getElementById("createTitle").textContent="Create PIN";
-document.getElementById("createSub").textContent="Choose a 4-digit PIN";
-setDots("c",0);
-document.getElementById("createMsg").textContent="";
-show("createBox");
-});
-
-document.getElementById("toLogin").addEventListener("click",function(){
-loginPin="";
-setDots("d",0);
-document.getElementById("loginMsg").textContent="";
-show("loginBox");
-});
-
-document.getElementById("startBtn").addEventListener("click",function(){
-if(!canPlay().ok){showLimit();return;}
-startGame();
-});
-
-document.getElementById("logoutBtn").addEventListener("click",function(){
-loginPin="";
-setDots("d",0);
-show("loginBox");
-});
-
-document.getElementById("quitBtn").addEventListener("click",function(){
-if(timerInterval)clearInterval(timerInterval);
-loadDashboard();
-});
-
-document.getElementById("submitBtn").addEventListener("click",submitSelection);
-document.getElementById("clearBtn").addEventListener("click",clearAllSelections);
-
-document.getElementById("againBtn").addEventListener("click",function(){
-if(!canPlay().ok){
-document.getElementById("resBg").classList.add("hidden");
-showLimit();
-return;
-}
-startGame();
-});
-
-document.getElementById("menuBtn").addEventListener("click",function(){
-document.getElementById("resBg").classList.add("hidden");
-loadDashboard();
-});
-
-document.getElementById("upgradeBtn").addEventListener("click",function(){
-location.href="mailto:support@akashic.works?subject=Pro%20Upgrade";
-});
-
-if(hasPin()){
-show("loginBox");
-}else{
-show("createBox");
-}
-});
-})();
-</script>
-</body>
-</html>
+(function(){var PK="ak_pins",UK="ak_users",SK="wsen_",DK="wsen_dev",MD=3,MX=3,SZ=8,GT=90,WC=6;
+var WORDS=["BRAIN","THINK","SMART","LOGIC","FOCUS","MEMORY","LEARN","SOLVE","SKILL","SHARP","ALERT","QUICK","POWER","SENSE","IDEA","WISE","GAME","PLAY","FIND","SEEK","GRID","WORD","TIME","GOAL","MIND","KNOW"];
+var pin="",user=null,scr=0,found=0,tLeft=GT,tInt=null,grid=[],words=[],placed=[],sel=[],foundCells=[];
+function $(i){return document.getElementById(i)}
+function h(p){var x=0,s=p+"ak";for(var i=0;i<s.length;i++){x=((x<<5)-x)+s.charCodeAt(i);x&=x}return x.toString(36)}
+function gP(){try{return JSON.parse(localStorage.getItem(PK))||{}}catch(e){return{}}}
+function sP(p){localStorage.setItem(PK,JSON.stringify(p))}
+function cP(p){return!!gP()[h(p)]}
+function aP(p){var ps=gP();ps[h(p)]={c:Date.now()};sP(ps)}
+function gU(){try{return JSON.parse(localStorage.getItem(UK))||{}}catch(e){return{}}}
+function sU(u){localStorage.setItem(UK,JSON.stringify(u))}
+function gUsr(x){return gU()[x]||null}
+function sUsr(x,d){var u=gU();u[x]=d;sU(u)}
+function gDev(){var id=localStorage.getItem(DK);if(!id){id="d_"+Date.now()+"_"+Math.random().toString(36).substr(2,6);localStorage.setItem(DK,id)}return id}
+function tdy(){var d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()}
+function gTr(){try{var t=JSON.parse(localStorage.getItem(DK+"_t"));if(t&&t.sd)return t}catch(e){}return{n:0,d:tdy(),sd:tdy()}}
+function sTr(t){localStorage.setItem(DK+"_t",JSON.stringify(t))}
+function dDif(s){return Math.floor((new Date()-new Date(s))/864e5)}
+function canP(){var t=gTr(),td=tdy(),dy=dDif(t.sd);if(dy>=MX)return{ok:false,left:0,exp:true,dl:0};if(t.d!==td){t.n=0;t.d=td;sTr(t)}return{ok:t.n<MD,left:MD-t.n,exp:false,dl:MX-dy}}
+function useT(){var t=gTr(),td=tdy();if(t.d!==td){t.n=0;t.d=td}t.n++;sTr(t);sBan()}
+function gSt(){try{return JSON.parse(localStorage.getItem(SK+h(pin)))||{g:0,b:0,t:0}}catch(e){return{g:0,b:0,t:0}}}
+function sSt(s){localStorage.setItem(SK+h(pin),JSON.stringify(s))}
+function sBan(){var c=canP();$("ban").textContent=c.exp?"Trial ended":c.left+"/"+MD+" (Day "+c.dl+")"}
+function sLim(){var c=canP();$("limT").textContent=c.exp?"Trial ended":"Daily limit";$("limM").textContent=c.exp?"Your 3-day trial expired":"Used "+MD+" games. "+c.dl+" day(s) left.";$("limP").classList.remove("hidden")}
+function show(id){["loginBox","createBox","nameBox","dashBox","gameBox"].forEach(function(x){$(x).classList.add("hidden")});$(id).classList.remove("hidden")}
+function dots(c,n){c.innerHTML="";for(var i=0;i<4;i++){var d=document.createElement("div");d.className="dot"+(i<n?" on":"");c.appendChild(d)}}
+function msg(el,t,e){el.textContent=t;el.className="msg "+(e?"err":"ok")}
+function rate(s){return s>=400?"Genius":s>=300?"Expert":s>=200?"Great":s>=100?"Good":"Learning"}
+var lPin="",cPin="",cfPin="",isCf=false;
+function mkKp(cont,onD,onDel){cont.innerHTML="";for(var i=1;i<=9;i++){(function(d){var b=document.createElement("button");b.className="key";b.textContent=d;b.onclick=function(){onD(d)};cont.appendChild(b)})(i)}var e=document.createElement("button");e.className="key empty";cont.appendChild(e);var z=document.createElement("button");z.className="key";z.textContent="0";z.onclick=function(){onD(0)};cont.appendChild(z);var dl=document.createElement("button");dl.className="key";dl.textContent="←";dl.onclick=onDel;cont.appendChild(dl)}
+function initL(){dots($("ld"),0);mkKp($("lk"),function(d){if(lPin.length<4){lPin+=d;dots($("ld"),lPin.length);if(lPin.length===4){setTimeout(function(){if(cP(lPin)){pin=lPin;user=gUsr(h(pin));if(user&&user.n)dash();else show("nameBox")}else{msg($("lm"),"Wrong PIN",1);lPin="";dots($("ld"),0)}},200)}}},function(){if(lPin.length>0){lPin=lPin.slice(0,-1);dots($("ld"),lPin.length);$("lm").textContent=""}})}
+function initC(){dots($("cd"),0);mkKp($("ck"),function(d){if(cfPin.length<4){cfPin+=d;dots($("cd"),cfPin.length);if(cfPin.length===4){setTimeout(function(){if(!isCf){cPin=cfPin;cfPin="";isCf=true;$("ct").textContent="Confirm PIN";$("cs").textContent="Enter PIN again";dots($("cd"),0)}else{if(cfPin===cPin){aP(cPin);pin=cPin;msg($("cm"),"PIN created!",0);setTimeout(function(){show("nameBox")},400)}else{msg($("cm"),"PINs don't match",1);cPin="";cfPin="";isCf=false;$("ct").textContent="Create PIN";$("cs").textContent="Choose a 4-digit PIN";dots($("cd"),0)}}},200)}}},function(){if(cfPin.length>0){cfPin=cfPin.slice(0,-1);dots($("cd"),cfPin.length);$("cm").textContent=""}})}
+function dash(){var s=gSt();$("wn").textContent="Welcome, "+(user?user.n:"Player")+"!";$("dG").textContent=s.g||0;$("dB").textContent=s.b||"--";$("dA").textContent=s.g>0?Math.round(s.t/s.g):"--";$("dR").textContent=s.b?rate(s.b):"--";show("dashBox");sBan();if(!canP().ok)sLim()}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function canPlace(w,r,c,dr,dc){if(r+dr*(w.length-1)<0||r+dr*(w.length-1)>=SZ)return false;if(c+dc*(w.length-1)<0||c+dc*(w.length-1)>=SZ)return false;for(var i=0;i<w.length;i++){var nr=r+dr*i,nc=c+dc*i;if(grid[nr][nc]!==""&&grid[nr][nc]!==w[i])return false}return true}
+function placeWord(w){var dirs=[[0,1],[1,0],[1,1],[0,-1],[-1,0],[-1,-1],[1,-1],[-1,1]];shuffle(dirs);for(var t=0;t<100;t++){var r=Math.floor(Math.random()*SZ),c=Math.floor(Math.random()*SZ);for(var di=0;di<dirs.length;di++){var dr=dirs[di][0],dc=dirs[di][1];if(canPlace(w,r,c,dr,dc)){var cells=[];for(var i=0;i<w.length;i++){var nr=r+dr*i,nc=c+dc*i;grid[nr][nc]=w[i];cells.push({r:nr,c:nc})}return cells}}}return null}
+function buildGrid(){grid=[];for(var i=0;i<SZ;i++){grid[i]=[];for(var j=0;j<SZ;j++)grid[i][j]=""}words=shuffle(WORDS.slice()).slice(0,WC);placed=[];for(var i=0;i<words.length;i++){var cells=placeWord(words[i]);if(cells)placed.push({word:words[i],cells:cells})}for(var i=0;i<SZ;i++)for(var j=0;j<SZ;j++)if(grid[i][j]==="")grid[i][j]=String.fromCharCode(65+Math.floor(Math.random()*26));renderGrid();renderWords()}
+function renderGrid(){var g=$("grid");g.innerHTML="";g.style.gridTemplateColumns="repeat("+SZ+",1fr)";for(var i=0;i<SZ;i++)for(var j=0;j<SZ;j++){var c=document.createElement("div");c.className="cell";c.textContent=grid[i][j];c.dataset.r=i;c.dataset.c=j;c.onclick=function(){toggleCell(this)};g.appendChild(c)}}
+function renderWords(){var w=$("wList");w.innerHTML="";words.forEach(function(word){var s=document.createElement("span");s.className="word";s.textContent=word;s.id="w_"+word;w.appendChild(s)})}
+function toggleCell(cell){var r=parseInt(cell.dataset.r),c=parseInt(cell.dataset.c);var idx=sel.findIndex(function(s){return s.r===r&&s.c===c});if(idx>=0){sel.splice(idx,1);cell.classList.remove("sel")}else{sel.push({r:r,c:c,el:cell});cell.classList.add("sel")}checkWord()}
+function checkWord(){var str="";sel.forEach(function(s){str+=grid[s.r][s.c]});var rev=str.split("").reverse().join("");for(var i=0;i<placed.length;i++){var p=placed[i];if((str===p.word||rev===p.word)&&!p.found){p.found=true;found++;scr+=50+tLeft;$("gF").textContent=found+"/"+WC;$("gS").textContent=scr;sel.forEach(function(s){s.el.classList.remove("sel");s.el.classList.add("found");foundCells.push(s)});sel=[];var we=$("w_"+p.word);if(we)we.classList.add("done");if(found>=placed.length)endG();return}}if(sel.length>6){sel[0].el.classList.remove("sel");sel.shift()}}
+function startT(){$("tmr").style.width="100%";tInt=setInterval(function(){tLeft--;$("gT").textContent=tLeft;$("tmr").style.width=(tLeft/GT*100)+"%";if(tLeft<=0){clearInterval(tInt);endG()}},1000)}
+function startG(){if(!canP().ok){sLim();return}scr=0;found=0;tLeft=GT;sel=[];foundCells=[];show("gameBox");$("gF").textContent="0/"+WC;$("gS").textContent="0";$("gT").textContent=GT;buildGrid();startT()}
+function endG(){if(tInt){clearInterval(tInt);tInt=null}var s=gSt();s.g++;s.t+=scr;var rec=scr>s.b;if(rec)s.b=scr;sSt(s);useT();$("rsS").textContent=scr;$("rsF").textContent=found+"/"+WC;$("rsT").textContent=tLeft+"s";$("rsRt").textContent="Rating: "+rate(scr);if(rec)$("rsR").classList.remove("hidden");else $("rsR").classList.add("hidden");$("resB").classList.remove("hidden");if(!canP().ok)setTimeout(sLim,1500)}
+document.addEventListener("DOMContentLoaded",function(){gDev();initL();initC();
+$("toC").onclick=function(){cPin="";cfPin="";isCf=false;$("ct").textContent="Create PIN";$("cs").textContent="Choose a 4-digit PIN";dots($("cd"),0);$("cm").textContent="";show("createBox")};
+$("toL").onclick=function(){lPin="";dots($("ld"),0);$("lm").textContent="";show("loginBox")};
+$("saveN").onclick=function(){var n=$("nameIn").value.trim();if(n.length<2){msg($("nm"),"Too short",1);return}user={n:n,c:Date.now()};sUsr(h(pin),user);dash()};
+$("startB").onclick=function(){if(!canP().ok){sLim();return}startG()};
+$("outB").onclick=function(){lPin="";pin="";user=null;dots($("ld"),0);show("loginBox")};
+$("quitB").onclick=function(){if(tInt){clearInterval(tInt);tInt=null}dash()};
+$("again").onclick=function(){$("resB").classList.add("hidden");if(!canP().ok){sLim();return}startG()};
+$("menu").onclick=function(){$("resB").classList.add("hidden");dash()};
+$("upg").onclick=function(){location.href="mailto:support@akashic.works?subject=Pro%20Upgrade"};
+show("loginBox");sBan()})})();
+</script></body></html>
